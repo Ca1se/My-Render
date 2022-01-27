@@ -1,15 +1,9 @@
-#include "matrix.hpp"
+#include "math_utils.hpp"
 #include <iostream>
 
 
 int main() {
-    Matrix<float, 2, 3> A;
-    Matrix3f B;
-    A << 1, 2, 3,
-         4, 5, 6;
-    B << 100, 10, 1,
-         10, 100, 1,
-         1, 10, 100;
-    std::cout << (A * B) << std::endl;
-    return 0;
+     Vector<int, 3> m{1, 2, 3};
+     std::cout << m << std::endl;
+     return 0;
 }
