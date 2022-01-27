@@ -46,15 +46,16 @@ public:
     Matrix() = default;
     ~Matrix() = default;
 
-    template<typename ...Args>
-    Matrix(Args&& ...args) {
-        static_assert(sizeof...(Args) == (_Rows * _Cols));
-        int cnt = 0;
-        (unpacker(*this, args, cnt), ...);
-    }
-
     Matrix(const Matrix<_T, _Rows, _Cols>& other) {
         std::copy(other.begin(), other.end(), data_);
+    }
+
+    template<typename ...Args>
+    Matrix(_T&& first, Args&& ...args) {
+        assert((sizeof...(Args) + 1) == (_Rows * _Cols));
+        int cnt = 0;
+        unpacker(*this, first, cnt);
+        (unpacker(*this, args, cnt), ...);
     }
 
     static Matrix<_T, _Rows, _Cols> Zero() {
@@ -143,12 +144,9 @@ inline CommaInitializer<_T, _Rows, _Cols> operator<< (Matrix<_T, _Rows, _Cols>& 
 template <typename _T, size_t _Rows, size_t _Cols>
 class Matrix<_T, _Rows, _Cols, true, true>: public Matrix<_T, _Rows, _Cols, false, true> {
 public:
+    
     template<typename ...Args>
-    Matrix(Args&& ...args) {
-        static_assert(sizeof...(Args) == (_Rows * _Cols));
-        int cnt = 0;
-        (unpacker(*this, args, cnt), ...);
-    }
+    Matrix(Args&& ...args): Matrix<_T, _Rows, _Cols, false, true>::Matrix(std::forward<Args>(args)...) {}
 
     static Matrix<_T, _Rows, _Cols> Identity() {
         Matrix<_T, _Rows, _Cols> ret;
@@ -207,5 +205,17 @@ typedef Matrix<float, 4, 4> Matrix4f;
 typedef Matrix<double, 2, 2> Matrix2d;
 typedef Matrix<double, 3, 3> Matrix3d;
 typedef Matrix<double, 4, 4> Matrix4d;
+
+typedef Vector<int, 2> Vector2i;
+typedef Vector<int, 3> Vector3i;
+typedef Vector<int, 4> Vector4i;
+
+typedef Vector<float, 2> Vector2f;
+typedef Vector<float, 3> Vector3f;
+typedef Vector<float, 4> Vector4f;
+
+typedef Vector<double, 2> Vector2d;
+typedef Vector<double, 3> Vector3d;
+typedef Vector<double, 4> Vector4d;
 
 #endif // _MATH_UTILS_HPP_
