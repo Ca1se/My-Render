@@ -103,8 +103,6 @@ public:
         return ret;
     }
 
-    
-
     template <typename _TR, size_t _RowsR, size_t _ColsR>
     friend class CommaInitializer;
 
