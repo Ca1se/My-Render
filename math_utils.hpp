@@ -14,12 +14,12 @@
 template <typename _T, size_t _Rows, size_t _Cols>
 class CommaInitializer;
 
-static constexpr bool eq(size_t t1, size_t t2) {
+inline constexpr bool eq(size_t t1, size_t t2) {
     return (t1 == t2);
 }
 
 template <typename _T, typename _U>
-void unpacker(_T& container, _U&& t, int& pos) {
+inline void unpacker(_T& container, _U&& t, int& pos) {
     container.data_[pos++] = t;
 }
 
