@@ -3,7 +3,6 @@
 
 #include <algorithm>
 #include <cassert>
-#include <complex>
 #include <cstddef>
 #include <initializer_list>
 #include <ostream>
