@@ -4,7 +4,7 @@
 
 int main() {
     Matrix<float, 2, 3> A;
-    Matrix<float, 3, 3> B;
+    Matrix3f B;
     A << 1, 2, 3,
          4, 5, 6;
     B << 100, 10, 1,
