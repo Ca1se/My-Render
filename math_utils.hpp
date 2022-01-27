@@ -1,5 +1,5 @@
-#ifndef _MATRIX_HPP_
-#define _MATRIX_HPP_
+#ifndef _MATH_UTILS_HPP_
+#define _MATH_UTILS_HPP_
 
 #include <algorithm>
 #include <cassert>
@@ -9,12 +9,18 @@
 #include <ostream>
 #include <stdexcept>
 #include <type_traits>
+#include <utility>
 
 template <typename _T, size_t _Rows, size_t _Cols>
 class CommaInitializer;
 
 static constexpr bool eq(size_t t1, size_t t2) {
     return (t1 == t2);
+}
+
+template <typename _T, typename _U>
+void unpacker(_T& container, _U&& t, int& pos) {
+    container.data_[pos++] = t;
 }
 
 template <typename _T, size_t _Rows, size_t _Cols,
@@ -31,8 +37,6 @@ public:
     typedef _T& reference;
     typedef const _T& const_reference;
 
-       
-
 private:
     static constexpr size_t size_ = (_Rows * _Cols);
 
@@ -42,9 +46,11 @@ public:
     Matrix() = default;
     ~Matrix() = default;
 
-    Matrix(std::initializer_list<_T> elements) {
-        assert(size_ == elements.size());
-        std::copy(elements.begin(), elements.end(), data_);
+    template<typename ...Args>
+    Matrix(Args&& ...args) {
+        static_assert(sizeof...(Args) == (_Rows * _Cols));
+        int cnt = 0;
+        (unpacker(*this, args, cnt), ...);
     }
 
     Matrix(const Matrix<_T, _Rows, _Cols>& other) {
@@ -111,13 +117,39 @@ public:
 
     template <typename _TR, size_t _RowsR, size_t _ColsR, typename _U>
     friend CommaInitializer<_TR, _RowsR, _ColsR> operator<< (Matrix<_TR, _RowsR, _ColsR>& matrix, _U val);
+
+    template <typename _TR, typename _UR>
+    friend void unpacker(_TR& container, _UR&& t, int& pos);
 };
+
+template <typename _T, size_t _Rows, size_t _Cols>
+inline std::ostream& operator<< (std::ostream& os, const Matrix<_T, _Rows, _Cols>& matrix) {
+    for(int i = 0; i < _Rows; i++) {
+        if(i != 0) os << "\n";
+        for(int j = 0; j < _Cols; j++) {
+            os << matrix.at(i, j) << " ";
+        }
+    }
+    return os;
+}
+
+template <typename _T, size_t _Rows, size_t _Cols, typename _U>
+inline CommaInitializer<_T, _Rows, _Cols> operator<< (Matrix<_T, _Rows, _Cols>& matrix, _U val) {
+    return CommaInitializer<_T, _Rows, _Cols>(matrix, val);
+}
 
 
 
 template <typename _T, size_t _Rows, size_t _Cols>
 class Matrix<_T, _Rows, _Cols, true, true>: public Matrix<_T, _Rows, _Cols, false, true> {
 public:
+    template<typename ...Args>
+    Matrix(Args&& ...args) {
+        static_assert(sizeof...(Args) == (_Rows * _Cols));
+        int cnt = 0;
+        (unpacker(*this, args, cnt), ...);
+    }
+
     static Matrix<_T, _Rows, _Cols> Identity() {
         Matrix<_T, _Rows, _Cols> ret;
 
@@ -157,21 +189,12 @@ public:
     }
 };
 
-template <typename _T, size_t _Rows, size_t _Cols>
-inline std::ostream& operator<< (std::ostream& os, const Matrix<_T, _Rows, _Cols>& matrix) {
-    for(int i = 0; i < _Rows; i++) {
-        if(i != 0) os << "\n";
-        for(int j = 0; j < _Cols; j++) {
-            os << matrix.at(i, j) << " ";
-        }
-    }
-    return os;
-}
-
-template <typename _T, size_t _Rows, size_t _Cols, typename _U>
-inline CommaInitializer<_T, _Rows, _Cols> operator<< (Matrix<_T, _Rows, _Cols>& matrix, _U val) {
-    return CommaInitializer<_T, _Rows, _Cols>(matrix, val);
-}
+template <typename _T, size_t _Size>
+class Vector: public Matrix<_T, _Size, 1> {
+public:
+    template <typename ...Args>
+    Vector(Args&& ...args): Matrix<_T, _Size, 1>::Matrix(std::forward<Args>(args)...) {}
+};
 
 typedef Matrix<int, 2, 2> Matrix2i;
 typedef Matrix<int, 3, 3> Matrix3i;
@@ -185,4 +208,4 @@ typedef Matrix<double, 2, 2> Matrix2d;
 typedef Matrix<double, 3, 3> Matrix3d;
 typedef Matrix<double, 4, 4> Matrix4d;
 
-#endif
+#endif // _MATH_UTILS_HPP_
