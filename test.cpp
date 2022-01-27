@@ -3,7 +3,8 @@
 
 
 int main() {
-     Vector<int, 3> m{1, 2, 3};
-     std::cout << m << std::endl;
+     Vector3f v1{1, 2, 3};
+     Matrix<float, 1, 3> v2{1, 2, 3};
+     std::cout << (v2 * v1) << std::endl;
      return 0;
 }
