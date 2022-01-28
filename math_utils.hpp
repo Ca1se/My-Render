@@ -10,16 +10,13 @@
 #include <type_traits>
 #include <utility>
 
-template <typename _T, size_t _Rows, size_t _Cols>
-class CommaInitializer;
-
 inline constexpr bool eq(size_t t1, size_t t2) {
     return (t1 == t2);
 }
 
 template <typename _T, typename _U>
 inline void unpacker(_T& container, _U&& t, int& pos) {
-    container.data_[pos++] = t;
+    container[pos++] = t;
 }
 
 template <typename _T, size_t _Rows, size_t _Cols,
@@ -35,6 +32,9 @@ public:
     typedef const _T* const_iterator;
     typedef _T& reference;
     typedef const _T& const_reference;
+
+    template <typename _U>
+    using IsNumber = typename std::enable_if<std::is_arithmetic<_U>::value, int>::type;
 
 private:
     static constexpr size_t size_ = (_Rows * _Cols);
@@ -60,7 +60,7 @@ public:
     static Matrix<_T, _Rows, _Cols> Zero() {
         Matrix<_T, _Rows, _Cols> ret;
         for(int i = 0; i < ret.size(); i++) {
-            ret.data_[i] = 0;
+            ret[i] = 0;
         }
         return ret;
     }
@@ -92,34 +92,157 @@ public:
         return data_[row_index * _Cols + col_index];
     }
 
-    template<size_t _OtherCols>
-    Matrix<_T, _Rows, _OtherCols> operator* (const Matrix<_T, _Cols, _OtherCols>& other_matrix) const {
+    reference at(int index) noexcept {
+        assert(index < size_);
+        return data_[index];
+    }
+
+    const_reference at(int index) const noexcept {
+        assert(index < size_);
+        return data_[index];
+    }
+
+    reference operator() (size_t row_index, size_t col_index) noexcept {
+        return data_[row_index * _Cols + col_index];
+    }
+
+    const_reference operator() (size_t row_index, size_t col_index) const noexcept {
+        return data_[row_index * _Cols + col_index];
+    }
+
+    reference operator[] (size_t index) noexcept {
+        return data_[index];
+    }
+
+    const_reference operator[] (size_t index) const noexcept {
+        return data_[index];
+    }
+
+    template<typename _U, size_t _OtherCols, IsNumber<_U> = 0>
+    Matrix<_T, _Rows, _OtherCols> operator* 
+            (const Matrix<_U, _Cols, _OtherCols>& other_matrix) 
+            const noexcept {
         Matrix<_T, _Rows, _OtherCols> ret;
 
         for(int i = 0; i < _Rows; i++) {
             for(int j = 0; j < _OtherCols; j++) {
                 _T t{};
                 for(int k = 0; k < _Cols; k++) {
-                    t += this->at(i, k) * other_matrix.at(k, j);
+                    t += (*this)(i, k) * other_matrix(k, j);
                 }
-                ret.at(i, j) = t;
+                ret(i, j) = t;
             }
         }
 
         return ret;
     }
 
-    template <typename _TR, size_t _RowsR, size_t _ColsR>
-    friend class CommaInitializer;
 
-    template <typename _TR, size_t _RowsR, size_t _ColsR>
-    friend std::ostream& operator<< (std::ostream& os, const Matrix<_TR, _RowsR, _ColsR>& matrix);
+    template <typename _U, IsNumber<_U> = 0>
+    Matrix<_T, _Rows, _Cols> operator* (_U number) const noexcept {
+        Matrix<_T, _Rows, _Cols> ret(*this);
 
-    template <typename _TR, size_t _RowsR, size_t _ColsR, typename _U>
-    friend CommaInitializer<_TR, _RowsR, _ColsR> operator<< (Matrix<_TR, _RowsR, _ColsR>& matrix, _U val);
+        for(int i = 0; i < ret.size(); i++) {
+            ret[i] *= number;
+        }
 
-    template <typename _TR, typename _UR>
-    friend void unpacker(_TR& container, _UR&& t, int& pos);
+        return ret;
+    }
+
+    template <typename _U, IsNumber<_U> = 0>
+    Matrix<_T, _Rows, _Cols> operator/ (_U number) const noexcept {
+        Matrix<_T, _Rows, _Cols> ret(*this);
+
+        for(int i = 0; i < ret.size(); i++) {
+            ret[i] /= number;
+        }
+        
+        return ret;
+    }
+
+    template <typename _U, IsNumber<_U> = 0>
+    Matrix<_T, _Rows, _Cols> operator+ (const Matrix<_U, _Rows, _Cols>& other_matrix) const noexcept {
+        Matrix<_T, _Rows, _Cols> ret(*this);
+
+        for(int i = 0; i < ret.size(); i++) {
+            ret[i] += other_matrix[i];
+        }
+
+        return ret;
+    }
+
+    template <typename _U, IsNumber<_U> = 0>
+    Matrix<_T, _Rows, _Cols> operator+ (_U number) const noexcept {
+        Matrix<_T, _Rows, _Cols> ret(*this);
+
+        for(int i = 0; i < ret.size(); i++) {
+            ret[i] += number;
+        }
+
+        return ret;
+    }
+
+    template <typename _U, IsNumber<_U> = 0>
+    Matrix<_T, _Rows, _Cols> operator- (const Matrix<_U, _Rows, _Cols>& other_matrix) const noexcept {
+        Matrix<_T, _Rows, _Cols> ret(*this);
+
+        for(int i = 0; i < ret.size(); i++) {
+            ret[i] -= other_matrix[i];
+        }
+
+        return ret;
+    }
+
+    template <typename _U, IsNumber<_U> = 0>
+    Matrix<_T, _Rows, _Cols> operator- (_U number) const noexcept {
+        Matrix<_T, _Rows, _Cols> ret(*this);
+
+        for(int i = 0; i < ret.size(); i++) {
+            ret[i] -= number;
+        }
+
+        return ret;
+    }
+
+    template <typename _U, IsNumber<_U> = 0>
+    Matrix<_T, _Rows, _Cols> cwiseProduct
+            (const Matrix<_U, _Rows, _Cols>& other_matrix) 
+            const noexcept {
+        Matrix<_T, _Rows, _Cols> ret(*this);
+
+        for(int i = 0; i < ret.size(); i++) {
+            ret[i] *= other_matrix[i];
+        }
+
+        return ret;
+    }
+
+};
+
+template <typename _T, size_t _Rows, size_t _Cols>
+class CommaInitializer {
+private:
+    Matrix<_T, _Rows, _Cols>& target_;
+    Matrix<_T, _Rows, _Cols> tmp_;
+    int init_count_;
+public:
+    template<typename _U>
+    CommaInitializer(Matrix<_T, _Rows, _Cols>& t, _U val): 
+            target_(t), init_count_(1) {
+        tmp_.at(0) = val;
+    }
+
+    ~CommaInitializer() {
+        assert(init_count_ == target_.size());
+        std::swap(target_, tmp_);
+    }
+
+    template<typename _U>
+    CommaInitializer& operator, (_U e) {
+        tmp_.at(init_count_) = e;
+        init_count_++;
+        return *this;
+    }
 };
 
 template <typename _T, size_t _Rows, size_t _Cols>
@@ -127,7 +250,7 @@ inline std::ostream& operator<< (std::ostream& os, const Matrix<_T, _Rows, _Cols
     for(int i = 0; i < _Rows; i++) {
         if(i != 0) os << "\n";
         for(int j = 0; j < _Cols; j++) {
-            os << matrix.at(i, j) << " ";
+            os << matrix(i, j) << " ";
         }
     }
     return os;
@@ -152,37 +275,11 @@ public:
 
         for(int i = 0; i < _Rows; i++) {
             for(int j = 0; j < _Cols; j++) {
-                ret.at(i, j) = 0;
-                if(i == j)  ret.at(i, j) = 1;
+                ret(i, j) = 0;
+                if(i == j)  ret(i, j) = 1;
             }
         }
         return ret;
-    }
-};
-
-template <typename _T, size_t _Rows, size_t _Cols>
-class CommaInitializer {
-private:
-    Matrix<_T, _Rows, _Cols>& target_;
-    Matrix<_T, _Rows, _Cols> tmp_;
-    int init_count_;
-public:
-    template<typename _U>
-    CommaInitializer(Matrix<_T, _Rows, _Cols>& t, _U val): 
-            target_(t), init_count_(1) {
-        tmp_.data_[0] = val;
-    }
-
-    ~CommaInitializer() {
-        assert(init_count_ == target_.size());
-        std::swap(target_, tmp_);
-    }
-
-    template<typename _U>
-    CommaInitializer& operator, (_U e) {
-        tmp_.data_[init_count_] = e;
-        init_count_++;
-        return *this;
     }
 };
 
