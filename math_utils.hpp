@@ -202,7 +202,16 @@ public:
         for(int i = 0; i < ret.size(); i++) {
             ret[i] -= number;
         }
+        return ret;
+    }
 
+    Matrix<_T, _Cols, _Rows> transpose() const noexcept {
+        Matrix<_T, _Cols, _Rows> ret;
+        for(int i = 0; i < rows(); i++) {
+            for(int j = 0; j < cols(); j++) {
+                ret(j, i) = (*this)(i, j);
+            }
+        }
         return ret;
     }
 
@@ -265,6 +274,8 @@ inline CommaInitializer<_T, _Rows, _Cols> operator<< (Matrix<_T, _Rows, _Cols>& 
 
 template <typename _T, size_t _Rows, size_t _Cols>
 class Matrix<_T, _Rows, _Cols, true, true>: public Matrix<_T, _Rows, _Cols, false, true> {
+private:
+    typedef Matrix<_T, _Rows, _Cols, false, true> Base;
 public:
     
     template<typename ...Args>
@@ -285,9 +296,12 @@ public:
 
 template <typename _T, size_t _Size>
 class Vector: public Matrix<_T, _Size, 1> {
+private:
+    typedef Matrix<_T, _Size, 1> Base;
+
 public:
     template <typename ...Args>
-    Vector(Args&& ...args): Matrix<_T, _Size, 1>::Matrix(std::forward<Args>(args)...) {}
+    Vector(Args&& ...args): Base::Matrix(std::forward<Args>(args)...) {}
 
 public:
 
@@ -310,7 +324,7 @@ public:
         }
     }
 
-    Vector<_T, _Size> normalized() noexcept {
+    Vector<_T, _Size> normalized() const noexcept {
         Vector<_T, _Size> ret(*this);
         auto n = norm();
 
@@ -318,6 +332,15 @@ public:
             it /= n;
         }
 
+        return ret;
+    }
+
+    template <typename _U>
+    _T dot(const Vector<_U, _Size>& other_vector) const noexcept {
+        _T ret{};
+        for(int i = 0; i < Base::size(); i++) {
+            ret += (*this)[i] * other_vector[i];
+        }
         return ret;
     }
 };
