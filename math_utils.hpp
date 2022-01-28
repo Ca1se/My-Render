@@ -1,8 +1,10 @@
 #ifndef _MATH_UTILS_HPP_
 #define _MATH_UTILS_HPP_
 
+#include <eigen3/Eigen/Eigen>
 #include <algorithm>
 #include <cassert>
+#include <cmath>
 #include <cstddef>
 #include <initializer_list>
 #include <ostream>
@@ -261,8 +263,6 @@ inline CommaInitializer<_T, _Rows, _Cols> operator<< (Matrix<_T, _Rows, _Cols>& 
     return CommaInitializer<_T, _Rows, _Cols>(matrix, val);
 }
 
-
-
 template <typename _T, size_t _Rows, size_t _Cols>
 class Matrix<_T, _Rows, _Cols, true, true>: public Matrix<_T, _Rows, _Cols, false, true> {
 public:
@@ -288,6 +288,38 @@ class Vector: public Matrix<_T, _Size, 1> {
 public:
     template <typename ...Args>
     Vector(Args&& ...args): Matrix<_T, _Size, 1>::Matrix(std::forward<Args>(args)...) {}
+
+public:
+
+    _T squareNorm() const noexcept {
+        _T ret{};
+        for(auto it: *this) {
+            ret += it * it;
+        }
+        return ret;
+    }
+
+    _T norm() const noexcept {
+        return std::sqrt(squareNorm());
+    }
+
+    void normalize() noexcept {
+        auto n = norm();
+        for(auto& it: *this) {
+            it /= n;
+        }
+    }
+
+    Vector<_T, _Size> normalized() noexcept {
+        Vector<_T, _Size> ret(*this);
+        auto n = norm();
+
+        for(auto& it: ret) {
+            it /= n;
+        }
+
+        return ret;
+    }
 };
 
 typedef Matrix<int, 2, 2> Matrix2i;
