@@ -146,7 +146,6 @@ public:
         return ret;
     }
 
-
     template <typename _U, IsNumber<_U> = 0>
     Matrix<_T, _Rows, _Cols> operator* (_U number) const noexcept {
         Matrix<_T, _Rows, _Cols> ret(*this);
