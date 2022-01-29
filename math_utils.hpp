@@ -4,7 +4,6 @@
 // This is a simple linear algebra library containing both 
 // matrix and vector parts. This library is used for 
 // calculations for my computer graphics practice project.
-//
 
 #ifndef _MATH_UTILS_HPP_
 #define _MATH_UTILS_HPP_
