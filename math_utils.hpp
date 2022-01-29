@@ -16,11 +16,6 @@ inline constexpr bool eq(size_t t1, size_t t2) {
     return (t1 == t2);
 }
 
-template <typename _T, typename _U>
-inline void unpacker(_T& container, _U&& t, int& pos) {
-    container[pos++] = t;
-}
-
 template <typename _T, size_t _Rows, size_t _Cols,
         bool = eq(_Rows, _Cols),
         bool = std::is_arithmetic<_T>::value>
@@ -29,11 +24,15 @@ class Matrix;
 template <typename _T, size_t _Rows, size_t _Cols>
 class Matrix<_T, _Rows, _Cols, false, true> {
 public:
-    typedef _T value_type;
-    typedef _T* iterator;
-    typedef const _T* const_iterator;
-    typedef _T& reference;
-    typedef const _T& const_reference;
+    typedef _T             value_type;
+    typedef std::size_t    size_type;
+    typedef std::ptrdiff_t difference_type;
+    typedef _T*            iterator;
+    typedef const _T*      const_iterator;
+    typedef _T*            pointer;
+    typedef const _T*      const_pointer;
+    typedef _T&            reference;
+    typedef const _T&      const_reference;
 
     template <typename _U>
     using IsNumber = typename std::enable_if<std::is_arithmetic<_U>::value, int>::type;
@@ -41,22 +40,19 @@ public:
 private:
     static constexpr size_t size_ = (_Rows * _Cols);
 
-    _T data_[size_];
+    value_type data_[size_];
 
 public:
     Matrix() = default;
     ~Matrix() = default;
 
     Matrix(const Matrix<_T, _Rows, _Cols>& other) {
-        std::copy(other.begin(), other.end(), data_);
+        std::copy(other.begin(), other.end(), begin());
     }
 
-    template<typename ...Args>
-    Matrix(_T&& first, Args&& ...args) {
-        assert((sizeof...(Args) + 1) == (_Rows * _Cols));
-        int cnt = 0;
-        unpacker(*this, first, cnt);
-        (unpacker(*this, args, cnt), ...);
+    Matrix(const std::initializer_list<value_type>& elements) {
+        assert(elements.size() == size());
+        std::copy(elements.begin(), elements.end(), begin());
     }
 
     static Matrix<_T, _Rows, _Cols> Zero() {
@@ -68,13 +64,13 @@ public:
     }
 
 public:
-    constexpr size_t size() const noexcept { return size_; }
+    constexpr size_type size() const noexcept { return size_; }
 
-    constexpr _T* data() const noexcept { return data_; }
+    constexpr value_type* data() const noexcept { return data_; }
 
-    constexpr size_t rows() const noexcept { return _Rows; }
+    constexpr size_type rows() const noexcept { return _Rows; }
 
-    constexpr size_t cols() const noexcept { return _Cols;}
+    constexpr size_type cols() const noexcept { return _Cols;}
 
     iterator begin() noexcept { return data_; }
 
@@ -163,7 +159,9 @@ public:
     }
 
     template <typename _U, IsNumber<_U> = 0>
-    Matrix<_T, _Rows, _Cols> operator+ (const Matrix<_U, _Rows, _Cols>& other_matrix) const noexcept {
+    Matrix<_T, _Rows, _Cols> operator+ 
+            (const Matrix<_U, _Rows, _Cols>& other_matrix) 
+            const noexcept {
         Matrix<_T, _Rows, _Cols> ret(*this);
 
         for(int i = 0; i < ret.size(); i++) {
@@ -185,7 +183,9 @@ public:
     }
 
     template <typename _U, IsNumber<_U> = 0>
-    Matrix<_T, _Rows, _Cols> operator- (const Matrix<_U, _Rows, _Cols>& other_matrix) const noexcept {
+    Matrix<_T, _Rows, _Cols> operator- 
+            (const Matrix<_U, _Rows, _Cols>& other_matrix) 
+            const noexcept {
         Matrix<_T, _Rows, _Cols> ret(*this);
 
         for(int i = 0; i < ret.size(); i++) {
@@ -276,10 +276,20 @@ template <typename _T, size_t _Rows, size_t _Cols>
 class Matrix<_T, _Rows, _Cols, true, true>: public Matrix<_T, _Rows, _Cols, false, true> {
 private:
     typedef Matrix<_T, _Rows, _Cols, false, true> Base;
+
 public:
-    
-    template<typename ...Args>
-    Matrix(Args&& ...args): Matrix<_T, _Rows, _Cols, false, true>::Matrix(std::forward<Args>(args)...) {}
+    typedef _T             value_type;
+    typedef std::size_t    size_type;
+    typedef std::ptrdiff_t difference_type;
+    typedef _T*            iterator;
+    typedef const _T*      const_iterator;
+    typedef _T*            pointer;
+    typedef const _T*      const_pointer;
+    typedef _T&            reference;
+    typedef const _T&      const_reference;
+
+public:
+    Matrix(const std::initializer_list<value_type>& elements): Base::Matrix(elements) {}
 
     static Matrix<_T, _Rows, _Cols> Identity() {
         Matrix<_T, _Rows, _Cols> ret;
@@ -292,6 +302,7 @@ public:
         }
         return ret;
     }
+
 };
 
 template <typename _T, size_t _Size>
@@ -300,12 +311,21 @@ private:
     typedef Matrix<_T, _Size, 1> Base;
 
 public:
-    template <typename ...Args>
-    Vector(Args&& ...args): Base::Matrix(std::forward<Args>(args)...) {}
+    typedef _T             value_type;
+    typedef std::size_t    size_type;
+    typedef std::ptrdiff_t difference_type;
+    typedef _T*            iterator;
+    typedef const _T*      const_iterator;
+    typedef _T*            pointer;
+    typedef const _T*      const_pointer;
+    typedef _T&            reference;
+    typedef const _T&      const_reference;
 
 public:
+    Vector(const std::initializer_list<value_type>& elements): Base::Matrix(elements) {}
 
-    _T squareNorm() const noexcept {
+public:
+    value_type squareNorm() const noexcept {
         _T ret{};
         for(auto it: *this) {
             ret += it * it;
@@ -313,7 +333,7 @@ public:
         return ret;
     }
 
-    _T norm() const noexcept {
+    value_type norm() const noexcept {
         return std::sqrt(squareNorm());
     }
 
@@ -336,7 +356,7 @@ public:
     }
 
     template <typename _U>
-    _T dot(const Vector<_U, _Size>& other_vector) const noexcept {
+    value_type dot(const Vector<_U, _Size>& other_vector) const noexcept {
         _T ret{};
         for(int i = 0; i < Base::size(); i++) {
             ret += (*this)[i] * other_vector[i];
