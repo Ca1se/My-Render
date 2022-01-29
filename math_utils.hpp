@@ -1,7 +1,6 @@
 #ifndef _MATH_UTILS_HPP_
 #define _MATH_UTILS_HPP_
 
-#include <eigen3/Eigen/Eigen>
 #include <algorithm>
 #include <cassert>
 #include <cmath>
@@ -289,6 +288,8 @@ public:
     typedef const _T&      const_reference;
 
 public:
+    Matrix() = default;
+
     Matrix(const std::initializer_list<value_type>& elements): Base::Matrix(elements) {}
 
     static Matrix<_T, _Rows, _Cols> Identity() {
@@ -304,6 +305,8 @@ public:
     }
 
 };
+
+
 
 template <typename _T, size_t _Size>
 class Vector: public Matrix<_T, _Size, 1> {
@@ -322,6 +325,8 @@ public:
     typedef const _T&      const_reference;
 
 public:
+    Vector() = default;
+
     Vector(const std::initializer_list<value_type>& elements): Base::Matrix(elements) {}
 
 public:
@@ -363,6 +368,58 @@ public:
         }
         return ret;
     }
+
+    template <typename _U>
+    Vector<_T, 3> cross(const Vector<_U, 3>& other_vector) const noexcept {
+        static_assert(_Size == 3);
+
+        return Vector<_T, 3>{
+            (*this)[1] * other_vector[2] - (*this)[2] * other_vector[1],
+            (*this)[2] * other_vector[0] - (*this)[0] * other_vector[2],
+            (*this)[0] * other_vector[1] - (*this)[1] * other_vector[0]
+        };
+    }
+
+    reference x() noexcept {
+        static_assert(_Size > 0);
+        return (*this)[0];
+    }
+
+    const_reference x() const noexcept {
+        static_assert(_Size > 0);
+        return (*this)[0];
+    }
+
+    reference y() noexcept {
+        static_assert(_Size > 1);
+        return (*this)[1];
+    }
+
+    const_reference y() const noexcept {
+        static_assert(_Size > 1);
+        return (*this)[1];
+    }
+
+    reference z() noexcept {
+        static_assert(_Size > 2);
+        return (*this)[2];
+    }
+
+    const_reference z() const noexcept {
+        static_assert(_Size > 2);
+        return (*this)[2];
+    }
+
+    reference w() noexcept {
+        static_assert(_Size > 3);
+        return (*this)[3];
+    }
+
+    const_reference w() const noexcept {
+        static_assert(_Size > 3);
+        return (*this)[3];
+    }
+
 };
 
 typedef Matrix<int, 2, 2> Matrix2i;
