@@ -22,52 +22,42 @@ inline constexpr bool eq(size_t t1, size_t t2) {
     return (t1 == t2);
 }
 
-// Class Matrix (and Vector) only accept types 
+// Class Matrix (and Vector) only accept types
 // that can be used for arithmetic.
-template <typename _T, size_t _Rows, size_t _Cols,
-        bool = eq(_Rows, _Cols),
-        bool = std::is_arithmetic<_T>::value>
+template <typename T, size_t Rows, size_t Cols,
+        bool = eq(Rows, Cols),
+        bool = std::is_arithmetic<T>::value>
 class Matrix;
 
-// The Base class, This class contains functions 
-// that are available when the number of rows and 
+// The Base class, This class contains functions
+// that are available when the number of rows and
 // columns of the matrix are equal and when they are not.
-template <typename _T, size_t _Rows, size_t _Cols>
-class Matrix<_T, _Rows, _Cols, false, true> {
+template <typename T, size_t Rows, size_t Cols>
+class Matrix<T, Rows, Cols, false, true> {
 public:
-    typedef _T             value_type;
-    typedef std::size_t    size_type;
-    typedef std::ptrdiff_t difference_type;
-    typedef _T*            iterator;
-    typedef const _T*      const_iterator;
-    typedef _T*            pointer;
-    typedef const _T*      const_pointer;
-    typedef _T&            reference;
-    typedef const _T&      const_reference;
-
-    template <typename _U>
-    using IsNumber = typename std::enable_if<std::is_arithmetic<_U>::value, int>::type;
+    template <typename U>
+    using IsNumber = typename std::enable_if<std::is_arithmetic<U>::value, int>::type;
 
 private:
-    static constexpr size_t size_ = (_Rows * _Cols);
+    static constexpr size_t size_ = (Rows * Cols);
 
-    value_type data_[size_];
+    T data_[size_];
 
 public:
     Matrix() = default;
     ~Matrix() = default;
 
-    Matrix(const Matrix<_T, _Rows, _Cols>& other) {
+    Matrix(const Matrix<T, Rows, Cols>& other) {
         std::copy(other.begin(), other.end(), begin());
     }
 
-    Matrix(const std::initializer_list<value_type>& elements) {
+    Matrix(const std::initializer_list<T>& elements) {
         assert(elements.size() == size());
         std::copy(elements.begin(), elements.end(), begin());
     }
 
-    static Matrix<_T, _Rows, _Cols> Zero() {
-        Matrix<_T, _Rows, _Cols> ret;
+    static Matrix<T, Rows, Cols> Zero() {
+        Matrix<T, Rows, Cols> ret;
         for(int i = 0; i < ret.size(); i++) {
             ret[i] = 0;
         }
@@ -75,68 +65,68 @@ public:
     }
 
 public:
-    constexpr size_type size() const noexcept { return size_; }
+    constexpr size_t size() const noexcept { return size_; }
 
-    constexpr value_type* data() const noexcept { return data_; }
+    constexpr T* data() const noexcept { return data_; }
 
-    constexpr size_type rows() const noexcept { return _Rows; }
+    constexpr size_t rows() const noexcept { return Rows; }
 
-    constexpr size_type cols() const noexcept { return _Cols;}
+    constexpr size_t cols() const noexcept { return Cols;}
 
-    iterator begin() noexcept { return data_; }
+    T* begin() noexcept { return data_; }
 
-    const_iterator begin() const noexcept { return data_; }
+    const T* begin() const noexcept { return data_; }
 
-    iterator end() noexcept { return (data_ + size_); }
+    T* end() noexcept { return (data_ + size_); }
 
-    const_iterator end() const noexcept { return (data_ + size_); }
+    const T* end() const noexcept { return (data_ + size_); }
 
-    reference at(int row_index, int col_index) noexcept {
-        assert((row_index < _Rows) && (col_index < _Cols));
-        return data_[row_index * _Cols + col_index];
+    T& at(int row_index, int col_index) noexcept {
+        assert((row_index < Rows) && (col_index < Cols));
+        return data_[row_index * Cols + col_index];
     }
 
-    const_reference at(int row_index, int col_index) const noexcept {
-        assert((row_index < _Rows) && (col_index < _Cols));
-        return data_[row_index * _Cols + col_index];
+    const T& at(int row_index, int col_index) const noexcept {
+        assert((row_index < Rows) && (col_index < Cols));
+        return data_[row_index * Cols + col_index];
     }
 
-    reference at(int index) noexcept {
+    T& at(int index) noexcept {
         assert(index < size_);
         return data_[index];
     }
 
-    const_reference at(int index) const noexcept {
+    const T& at(int index) const noexcept {
         assert(index < size_);
         return data_[index];
     }
 
-    reference operator() (size_t row_index, size_t col_index) noexcept {
-        return data_[row_index * _Cols + col_index];
+    T& operator() (size_t row_index, size_t col_index) noexcept {
+        return data_[row_index * Cols + col_index];
     }
 
-    const_reference operator() (size_t row_index, size_t col_index) const noexcept {
-        return data_[row_index * _Cols + col_index];
+    const T& operator() (size_t row_index, size_t col_index) const noexcept {
+        return data_[row_index * Cols + col_index];
     }
 
-    reference operator[] (size_t index) noexcept {
+    T& operator[] (size_t index) noexcept {
         return data_[index];
     }
 
-    const_reference operator[] (size_t index) const noexcept {
+    const T& operator[] (size_t index) const noexcept {
         return data_[index];
     }
 
-    template<typename _U, size_t _OtherCols, IsNumber<_U> = 0>
-    Matrix<_T, _Rows, _OtherCols> operator* 
-            (const Matrix<_U, _Cols, _OtherCols>& other_matrix) 
+    template<typename U, size_t OtherCols, IsNumber<U> = 0>
+    Matrix<T, Rows, OtherCols> operator*
+            (const Matrix<U, Cols, OtherCols>& other_matrix)
             const noexcept {
-        Matrix<_T, _Rows, _OtherCols> ret;
+        Matrix<T, Rows, OtherCols> ret;
 
-        for(int i = 0; i < _Rows; i++) {
-            for(int j = 0; j < _OtherCols; j++) {
-                _T t{};
-                for(int k = 0; k < _Cols; k++) {
+        for(int i = 0; i < Rows; i++) {
+            for(int j = 0; j < OtherCols; j++) {
+                T t{};
+                for(int k = 0; k < Cols; k++) {
                     t += (*this)(i, k) * other_matrix(k, j);
                 }
                 ret(i, j) = t;
@@ -146,9 +136,9 @@ public:
         return ret;
     }
 
-    template <typename _U, IsNumber<_U> = 0>
-    Matrix<_T, _Rows, _Cols> operator* (_U number) const noexcept {
-        Matrix<_T, _Rows, _Cols> ret(*this);
+    template <typename U, IsNumber<U> = 0>
+    Matrix<T, Rows, Cols> operator* (U number) const noexcept {
+        Matrix<T, Rows, Cols> ret(*this);
 
         for(int i = 0; i < ret.size(); i++) {
             ret[i] *= number;
@@ -157,22 +147,22 @@ public:
         return ret;
     }
 
-    template <typename _U, IsNumber<_U> = 0>
-    Matrix<_T, _Rows, _Cols> operator/ (_U number) const noexcept {
-        Matrix<_T, _Rows, _Cols> ret(*this);
+    template <typename U, IsNumber<U> = 0>
+    Matrix<T, Rows, Cols> operator/ (U number) const noexcept {
+        Matrix<T, Rows, Cols> ret(*this);
 
         for(int i = 0; i < ret.size(); i++) {
             ret[i] /= number;
         }
-        
+
         return ret;
     }
 
-    template <typename _U, IsNumber<_U> = 0>
-    Matrix<_T, _Rows, _Cols> operator+ 
-            (const Matrix<_U, _Rows, _Cols>& other_matrix) 
+    template <typename U, IsNumber<U> = 0>
+    Matrix<T, Rows, Cols> operator+
+            (const Matrix<U, Rows, Cols>& other_matrix)
             const noexcept {
-        Matrix<_T, _Rows, _Cols> ret(*this);
+        Matrix<T, Rows, Cols> ret(*this);
 
         for(int i = 0; i < ret.size(); i++) {
             ret[i] += other_matrix[i];
@@ -181,9 +171,9 @@ public:
         return ret;
     }
 
-    template <typename _U, IsNumber<_U> = 0>
-    Matrix<_T, _Rows, _Cols> operator+ (_U number) const noexcept {
-        Matrix<_T, _Rows, _Cols> ret(*this);
+    template <typename U, IsNumber<U> = 0>
+    Matrix<T, Rows, Cols> operator+ (U number) const noexcept {
+        Matrix<T, Rows, Cols> ret(*this);
 
         for(int i = 0; i < ret.size(); i++) {
             ret[i] += number;
@@ -192,11 +182,11 @@ public:
         return ret;
     }
 
-    template <typename _U, IsNumber<_U> = 0>
-    Matrix<_T, _Rows, _Cols> operator- 
-            (const Matrix<_U, _Rows, _Cols>& other_matrix) 
+    template <typename U, IsNumber<U> = 0>
+    Matrix<T, Rows, Cols> operator-
+            (const Matrix<U, Rows, Cols>& other_matrix)
             const noexcept {
-        Matrix<_T, _Rows, _Cols> ret(*this);
+        Matrix<T, Rows, Cols> ret(*this);
 
         for(int i = 0; i < ret.size(); i++) {
             ret[i] -= other_matrix[i];
@@ -205,9 +195,9 @@ public:
         return ret;
     }
 
-    template <typename _U, IsNumber<_U> = 0>
-    Matrix<_T, _Rows, _Cols> operator- (_U number) const noexcept {
-        Matrix<_T, _Rows, _Cols> ret(*this);
+    template <typename U, IsNumber<U> = 0>
+    Matrix<T, Rows, Cols> operator- (U number) const noexcept {
+        Matrix<T, Rows, Cols> ret(*this);
 
         for(int i = 0; i < ret.size(); i++) {
             ret[i] -= number;
@@ -215,8 +205,8 @@ public:
         return ret;
     }
 
-    Matrix<_T, _Cols, _Rows> transpose() const noexcept {
-        Matrix<_T, _Cols, _Rows> ret;
+    Matrix<T, Cols, Rows> transpose() const noexcept {
+        Matrix<T, Cols, Rows> ret;
         for(int i = 0; i < rows(); i++) {
             for(int j = 0; j < cols(); j++) {
                 ret(j, i) = (*this)(i, j);
@@ -225,11 +215,11 @@ public:
         return ret;
     }
 
-    template <typename _U, IsNumber<_U> = 0>
-    Matrix<_T, _Rows, _Cols> cwiseProduct
-            (const Matrix<_U, _Rows, _Cols>& other_matrix) 
+    template <typename U, IsNumber<U> = 0>
+    Matrix<T, Rows, Cols> cwiseProduct
+            (const Matrix<U, Rows, Cols>& other_matrix)
             const noexcept {
-        Matrix<_T, _Rows, _Cols> ret(*this);
+        Matrix<T, Rows, Cols> ret(*this);
 
         for(int i = 0; i < ret.size(); i++) {
             ret[i] *= other_matrix[i];
@@ -241,15 +231,15 @@ public:
 };
 
 // This class is used for comma initialization of matrix
-template <typename _T, size_t _Rows, size_t _Cols>
+template <typename T, size_t Rows, size_t Cols>
 class CommaInitializer {
 private:
-    Matrix<_T, _Rows, _Cols>& target_;
-    Matrix<_T, _Rows, _Cols> tmp_;
+    Matrix<T, Rows, Cols>& target_;
+    Matrix<T, Rows, Cols> tmp_;
     int init_count_;
 public:
-    template<typename _U>
-    CommaInitializer(Matrix<_T, _Rows, _Cols>& t, _U val): 
+    template<typename U>
+    CommaInitializer(Matrix<T, Rows, Cols>& t, U val):
             target_(t), init_count_(1) {
         tmp_.at(0) = val;
     }
@@ -259,58 +249,47 @@ public:
         std::swap(target_, tmp_);
     }
 
-    template<typename _U>
-    CommaInitializer& operator, (_U e) {
+    template<typename U>
+    CommaInitializer& operator, (U e) {
         tmp_.at(init_count_) = e;
         init_count_++;
         return *this;
     }
 };
 
-template <typename _T, size_t _Rows, size_t _Cols>
-inline std::ostream& operator<< (std::ostream& os, const Matrix<_T, _Rows, _Cols>& matrix) {
-    for(int i = 0; i < _Rows; i++) {
+template <typename T, size_t Rows, size_t Cols>
+inline std::ostream& operator<< (std::ostream& os, const Matrix<T, Rows, Cols>& matrix) {
+    for(int i = 0; i < Rows; i++) {
         if(i != 0) os << "\n";
-        for(int j = 0; j < _Cols; j++) {
+        for(int j = 0; j < Cols; j++) {
             os << matrix(i, j) << " ";
         }
     }
     return os;
 }
 
-template <typename _T, size_t _Rows, size_t _Cols, typename _U>
-inline CommaInitializer<_T, _Rows, _Cols> operator<< (Matrix<_T, _Rows, _Cols>& matrix, _U val) {
-    return CommaInitializer<_T, _Rows, _Cols>(matrix, val);
+template <typename T, size_t Rows, size_t Cols, typename U>
+inline CommaInitializer<T, Rows, Cols> operator<< (Matrix<T, Rows, Cols>& matrix, U val) {
+    return CommaInitializer<T, Rows, Cols>(matrix, val);
 }
 
-// This class contains functions that are only available 
+// This class contains functions that are only available
 // when the number of rows and the number of cols are equal.
-template <typename _T, size_t _Rows, size_t _Cols>
-class Matrix<_T, _Rows, _Cols, true, true>: public Matrix<_T, _Rows, _Cols, false, true> {
+template <typename T, size_t Rows, size_t Cols>
+class Matrix<T, Rows, Cols, true, true>: public Matrix<T, Rows, Cols, false, true> {
 private:
-    typedef Matrix<_T, _Rows, _Cols, false, true> Base;
-
-public:
-    typedef _T             value_type;
-    typedef std::size_t    size_type;
-    typedef std::ptrdiff_t difference_type;
-    typedef _T*            iterator;
-    typedef const _T*      const_iterator;
-    typedef _T*            pointer;
-    typedef const _T*      const_pointer;
-    typedef _T&            reference;
-    typedef const _T&      const_reference;
+    typedef Matrix<T, Rows, Cols, false, true> Base;
 
 public:
     Matrix() = default;
 
-    Matrix(const std::initializer_list<value_type>& elements): Base::Matrix(elements) {}
+    Matrix(const std::initializer_list<T>& elements): Base::Matrix(elements) {}
 
-    static Matrix<_T, _Rows, _Cols> Identity() {
-        Matrix<_T, _Rows, _Cols> ret;
+    static Matrix<T, Rows, Cols> Identity() {
+        Matrix<T, Rows, Cols> ret;
 
-        for(int i = 0; i < _Rows; i++) {
-            for(int j = 0; j < _Cols; j++) {
+        for(int i = 0; i < Rows; i++) {
+            for(int j = 0; j < Cols; j++) {
                 ret(i, j) = 0;
                 if(i == j)  ret(i, j) = 1;
             }
@@ -321,43 +300,32 @@ public:
 };
 
 
-// This class contains functions that are used for 
-// vector operations. 
-// Some functions in this class are unavailable in 
-// some cases, such as function cross is unavailable 
+// This class contains functions that are used for
+// vector operations.
+// Some functions in this class are unavailable in
+// some cases, such as function cross is unavailable
 // when _Size != 3, and if you use it, you will get
 // a compile error.
-template <typename _T, size_t _Size>
-class Vector: public Matrix<_T, _Size, 1> {
+template <typename T, size_t Size>
+class Vector: public Matrix<T, Size, 1> {
 private:
-    typedef Matrix<_T, _Size, 1> Base;
-
-public:
-    typedef _T             value_type;
-    typedef std::size_t    size_type;
-    typedef std::ptrdiff_t difference_type;
-    typedef _T*            iterator;
-    typedef const _T*      const_iterator;
-    typedef _T*            pointer;
-    typedef const _T*      const_pointer;
-    typedef _T&            reference;
-    typedef const _T&      const_reference;
+    typedef Matrix<T, Size, 1> Base;
 
 public:
     Vector() = default;
 
-    Vector(const std::initializer_list<value_type>& elements): Base::Matrix(elements) {}
+    Vector(const std::initializer_list<T>& elements): Base::Matrix(elements) {}
 
 public:
-    value_type squareNorm() const noexcept {
-        _T ret{};
+    T squareNorm() const noexcept {
+        T ret{};
         for(auto it: *this) {
             ret += it * it;
         }
         return ret;
     }
 
-    value_type norm() const noexcept {
+    T norm() const noexcept {
         return std::sqrt(squareNorm());
     }
 
@@ -368,8 +336,8 @@ public:
         }
     }
 
-    Vector<_T, _Size> normalized() const noexcept {
-        Vector<_T, _Size> ret(*this);
+    Vector<T, Size> normalized() const noexcept {
+        Vector<T, Size> ret(*this);
         auto n = norm();
 
         for(auto& it: ret) {
@@ -379,9 +347,9 @@ public:
         return ret;
     }
 
-    template <typename _U>
-    value_type dot(const Vector<_U, _Size>& other_vector) const noexcept {
-        _T ret{};
+    template <typename U>
+    T dot(const Vector<U, Size>& other_vector) const noexcept {
+        T ret{};
         for(int i = 0; i < Base::size(); i++) {
             ret += (*this)[i] * other_vector[i];
         }
@@ -389,60 +357,60 @@ public:
     }
 
     // Only available when vector size == 3
-    template <typename _U>
-    Vector<_T, 3> cross(const Vector<_U, 3>& other_vector) const noexcept {
-        static_assert(_Size == 3);
+    template <typename U>
+    Vector<T, 3> cross(const Vector<U, 3>& other_vector) const noexcept {
+        static_assert(Size == 3);
 
-        return Vector<_T, 3>{
+        return Vector<T, 3>{
             (*this)[1] * other_vector[2] - (*this)[2] * other_vector[1],
             (*this)[2] * other_vector[0] - (*this)[0] * other_vector[2],
             (*this)[0] * other_vector[1] - (*this)[1] * other_vector[0]
         };
     }
 
-    reference x() noexcept {
-        static_assert(_Size > 0);
+    T& x() noexcept {
+        static_assert(Size > 0);
         return (*this)[0];
     }
 
-    const_reference x() const noexcept {
-        static_assert(_Size > 0);
+    const T& x() const noexcept {
+        static_assert(Size > 0);
         return (*this)[0];
     }
 
     // Only available when vector size > 1
-    reference y() noexcept {
-        static_assert(_Size > 1);
+    T& y() noexcept {
+        static_assert(Size > 1);
         return (*this)[1];
     }
 
     // Only available when vector size > 1
-    const_reference y() const noexcept {
-        static_assert(_Size > 1);
+    const T& y() const noexcept {
+        static_assert(Size > 1);
         return (*this)[1];
     }
 
     // Only available when vector size > 2
-    reference z() noexcept {
-        static_assert(_Size > 2);
+    T& z() noexcept {
+        static_assert(Size > 2);
         return (*this)[2];
     }
 
     // Only available when vector size > 2
-    const_reference z() const noexcept {
-        static_assert(_Size > 2);
+    const T& z() const noexcept {
+        static_assert(Size > 2);
         return (*this)[2];
     }
 
     // Only available when vector size > 3
-    reference w() noexcept {
-        static_assert(_Size > 3);
+    T& w() noexcept {
+        static_assert(Size > 3);
         return (*this)[3];
     }
 
     // Only available when vector size > 3
-    const_reference w() const noexcept {
-        static_assert(_Size > 3);
+    const T& w() const noexcept {
+        static_assert(Size > 3);
         return (*this)[3];
     }
 
