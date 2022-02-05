@@ -5,8 +5,8 @@
 // matrix and vector parts. This library is used for 
 // calculations for my computer graphics practice project.
 
-#ifndef _MATH_UTILS_HPP_
-#define _MATH_UTILS_HPP_
+#ifndef _MATH_UTILS_HH_
+#define _MATH_UTILS_HH_
 
 #include <algorithm>
 #include <cassert>
@@ -314,6 +314,8 @@ private:
 public:
     Vector() = default;
 
+    Vector(const Matrix<T, Size, 1>& matrix): Base::Matrix(matrix) {}
+
     Vector(const std::initializer_list<T>& elements): Base::Matrix(elements) {}
 
 public:
@@ -440,4 +442,4 @@ typedef Vector<double, 2> Vector2d;
 typedef Vector<double, 3> Vector3d;
 typedef Vector<double, 4> Vector4d;
 
-#endif // _MATH_UTILS_HPP_
+#endif // _MATH_UTILS_HH_
