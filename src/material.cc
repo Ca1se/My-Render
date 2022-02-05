@@ -39,4 +39,5 @@ Texture::Texture(const std::string& texture_file_name): good_(false) {
     if(reverseEndian(sign) != kPngSign) {
         std::cerr << "Texture load failed: Texture::Texture(): Only support PNG texture\n";
     }
+
 }

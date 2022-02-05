@@ -116,10 +116,21 @@ void ObjLoader::loadMaterial(const std::string& mtl_file_name) {
             // map_Ka texture path
             if(line.substr(0, 6) == "map_Ka") {
                 sscanf(line.data(), "map_Ka %s", buf);
-                Texture* tex = new Texture();
+                Texture* tex = new Texture(buf);
+                if(!tex->good()) {
+                    delete tex;
+                    continue;
+                }
+                material->ambient_texture.reset(tex);
             // map_Kd texture path
             }else if(line.substr(0, 6) == "map_Kd") {
-
+                sscanf(line.data(), "map_Kd %s", buf);
+                Texture* tex = new Texture(buf);
+                if(!tex->good()) {
+                    delete tex;
+                    continue;
+                }
+                material->diffuse_texture.reset(tex);
             }
         }
     }
