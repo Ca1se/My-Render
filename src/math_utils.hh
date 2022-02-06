@@ -4,6 +4,7 @@
 // This is a simple linear algebra library containing both 
 // matrix and vector parts. This library is used for 
 // calculations for my computer graphics practice project.
+// This library require C++17
 
 #ifndef _MATH_UTILS_HH_
 #define _MATH_UTILS_HH_

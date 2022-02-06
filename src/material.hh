@@ -5,7 +5,6 @@
 #include <memory>
 #include "math_utils.hh"
 
-static const uint64_t kPngSign = 0x89504e470d0a1a0a;
 
 class Texture {
 private:
@@ -33,14 +32,6 @@ struct Material {
     std::shared_ptr<Texture> diffuse_texture;
 };
 
-inline const Material Material::default_material = {
-    "Default Material",
-    Vector3f::Zero(),
-    Vector3f::Zero(),
-    Vector3f::Zero(),
-    IllumMode::PHONG,
-    nullptr,
-    nullptr
-};
+
 
 #endif // _MATERIAL_HH_
