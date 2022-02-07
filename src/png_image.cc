@@ -1,4 +1,3 @@
-#include <bits/types/FILE.h>
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
@@ -6,6 +5,8 @@
 #include <fstream>
 #include <iostream>
 #include <memory>
+#include <sys/types.h>
+#include <zconf.h>
 #include <zlib.h>
 #include "png_image.hh"
 
@@ -54,12 +55,12 @@ bool PNGImage::readPNG(const std::string& png_file_name) {
     std::ifstream file(png_file_name, std::ios::in | std::ios::binary);
 
     if(!file.is_open()) 
-        return false;
+        goto failed;
 
     std::uint64_t sign;
     file.read((char*) &sign, 8);
     if(reverseEndian(sign) != kPngSign)
-        return false;
+        goto failed;
 
     std::uint32_t length;
     std::uint32_t block_type;
@@ -79,10 +80,10 @@ bool PNGImage::readPNG(const std::string& png_file_name) {
             file.read((char*) &crc, 4);
 
             if(reverseEndian(crc) != calCRC32(IHDR, (std::uint8_t*) &header_, length))
-                break;
+                goto failed;
 
             if(header_.color_type != TRUE_COLOR && header_.color_type != TRUE_COLOR_ALPHA)
-                break;
+                goto failed;
 
             header_.width = reverseEndian(header_.width);
             header_.height = reverseEndian(header_.height);
@@ -92,14 +93,34 @@ bool PNGImage::readPNG(const std::string& png_file_name) {
             file.read((char*) &crc, 4);
 
             if(reverseEndian(crc) != calCRC32(IDAT, (std::uint8_t*) buf.get(), length))
-                break;
+                goto failed;
 
-            // unfinished
-        }else {
+            int bpp = (header_.color_type == TRUE_COLOR ? 3 : 4);
+            std::uint64_t rgba_len = header_.width * header_.height * bpp + header_.height;
+            std::shared_ptr<std::uint8_t[]> rgba_data(new std::uint8_t[rgba_len]);
+            
+            int loop_count = 0;
+            do {
+                int res = uncompress(rgba_data.get(), &rgba_len, buf.get(), length);
+                if(res == Z_OK) {
+                    // unfinished
+                    // process filtering
+                    break;
+                }else if(res == Z_MEM_ERROR) {
+                    if(++loop_count < 10)
+                        continue;
+                    else
+                        goto failed;
+                }else {
+                    goto failed;
+                }
+            }while(true);
+        }else { 
             file.seekg(length + 4, std::ios::cur);
         }
     }
 
+failed:
     file.close();
     return false;
 }

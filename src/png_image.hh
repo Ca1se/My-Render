@@ -44,6 +44,12 @@ struct PNGColor {
     PNGColor() = default;
     PNGColor(std::uint8_t r, std::uint8_t g, std::uint8_t b, std::uint8_t a = 255): 
             rgba{r, g, b, a} {}
+    std::uint8_t& operator[] (size_t index) noexcept {
+        return rgba[index];
+    }
+    uint8_t operator[] (size_t index) const noexcept {
+        return rgba[index];
+    }
 };
 
 class PNGImage {
