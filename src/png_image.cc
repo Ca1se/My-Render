@@ -105,6 +105,7 @@ bool PNGImage::readPNG(const std::string& png_file_name) {
                 if(res == Z_OK) {
                     // unfinished
                     // process filtering
+                    // https://zhuanlan.zhihu.com/p/106945903
                     break;
                 }else if(res == Z_MEM_ERROR) {
                     if(++loop_count < 10)
