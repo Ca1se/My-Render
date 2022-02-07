@@ -1,11 +1,7 @@
 #include <cstdint>
-#include <cstdio>
-#include <cstdlib>
 #include <cstring>
 #include <fstream>
-#include <iostream>
 #include <memory>
-#include <sys/types.h>
 #include <zconf.h>
 #include <zlib.h>
 #include "png_image.hh"
