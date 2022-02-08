@@ -1,4 +1,5 @@
 #include <cstdint>
+#include <iostream>
 #include <cstring>
 #include <fstream>
 #include <memory>
@@ -50,6 +51,9 @@ PNGImage::PNGImage(const PNGImage& image):
 bool PNGImage::readPNG(const std::string& png_file_name) {
     std::ifstream file(png_file_name, std::ios::in | std::ios::binary);
 
+    std::shared_ptr<std::uint8_t[]> compressed_data;
+    std::uint32_t data_index = 0;
+
     if(!file.is_open()) 
         goto failed;
 
@@ -69,28 +73,6 @@ bool PNGImage::readPNG(const std::string& png_file_name) {
         block_type = reverseEndian(block_type);
         
         if(block_type == IEND) {
-            file.close();
-            return true;
-        }else if(block_type == IHDR) {
-            file.read((char*) &header_, length);
-            file.read((char*) &crc, 4);
-
-            if(reverseEndian(crc) != calCRC32(IHDR, (std::uint8_t*) &header_, length))
-                goto failed;
-
-            if(header_.color_type != TRUE_COLOR && header_.color_type != TRUE_COLOR_ALPHA)
-                goto failed;
-
-            header_.width = reverseEndian(header_.width);
-            header_.height = reverseEndian(header_.height);
-        }else if(block_type == IDAT){
-            std::shared_ptr<std::uint8_t[]> buf(new std::uint8_t[length]);
-            file.read((char*) buf.get(), length);
-            file.read((char*) &crc, 4);
-
-            if(reverseEndian(crc) != calCRC32(IDAT, (std::uint8_t*) buf.get(), length))
-                goto failed;
-
             int bpp = (header_.color_type == TRUE_COLOR ? 3 : 4);
             std::uint32_t data_width = header_.width * bpp;
             std::uint32_t data_height = header_.height;
@@ -99,7 +81,7 @@ bool PNGImage::readPNG(const std::string& png_file_name) {
             
             int loop_count = 0;
             do {
-                int res = uncompress(filtered_data.get(), &len, buf.get(), length);
+                int res = uncompress(filtered_data.get(), &len, compressed_data.get(), data_index);
                 if(res == Z_OK) {
                     data_.reset(new std::uint8_t[data_width * data_height]);
                     for(std::uint32_t i = 0; i < data_height; i++) {
@@ -149,6 +131,34 @@ bool PNGImage::readPNG(const std::string& png_file_name) {
                     goto failed;
                 }
             }while(true);
+            file.close();
+            return true;
+        }else if(block_type == IHDR) {
+            file.read((char*) &header_, length);
+            file.read((char*) &crc, 4);
+
+            if(reverseEndian(crc) != calCRC32(IHDR, (std::uint8_t*) &header_, length))
+                goto failed;
+
+            if(header_.color_type != TRUE_COLOR && header_.color_type != TRUE_COLOR_ALPHA)
+                goto failed;
+
+            header_.width = reverseEndian(header_.width);
+            header_.height = reverseEndian(header_.height);
+            compressed_data.reset(new std::uint8_t[(header_.width * 4 + 1) * header_.height]);
+        }else if(block_type == IDAT){
+            if(!compressed_data) goto failed;
+            std::shared_ptr<std::uint8_t[]> buf(new std::uint8_t[length]);
+            file.read((char*) buf.get(), length);
+            file.read((char*) &crc, 4);
+
+            if(reverseEndian(crc) != calCRC32(IDAT, (std::uint8_t*) buf.get(), length))
+                goto failed;
+
+            memcpy(compressed_data.get() + data_index, buf.get(), length);
+            data_index += length;
+
+            
         }else { 
             file.seekg(length + 4, std::ios::cur);
         }
