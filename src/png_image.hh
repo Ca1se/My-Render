@@ -63,7 +63,6 @@ public:
 
 public:
     bool readPNG(const std::string& png_file_name);
-    // bool generatePNG(const std::string& png_file_name);
 
     size_t width() const noexcept { return header_.width; }
     size_t height() const noexcept { return header_.height; }
