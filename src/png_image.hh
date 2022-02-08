@@ -2,7 +2,7 @@
 // Github: https://github.com/Ca1se
 //
 // This a simple PNG image library, it can read PNG image.
-// This library currently only support read true color image.
+// This library currently only support read true color image (24 or 32 bits).
 // This library require C++17 and zlib
 
 

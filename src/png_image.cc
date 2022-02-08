@@ -92,16 +92,53 @@ bool PNGImage::readPNG(const std::string& png_file_name) {
                 goto failed;
 
             int bpp = (header_.color_type == TRUE_COLOR ? 3 : 4);
-            std::uint64_t rgba_len = header_.width * header_.height * bpp + header_.height;
-            std::shared_ptr<std::uint8_t[]> rgba_data(new std::uint8_t[rgba_len]);
+            std::uint32_t data_width = header_.width * bpp;
+            std::uint32_t data_height = header_.height;
+            uLongf len = (data_width + 1) * data_height;
+            std::shared_ptr<std::uint8_t[]> filtered_data(new std::uint8_t[len]);
             
             int loop_count = 0;
             do {
-                int res = uncompress(rgba_data.get(), &rgba_len, buf.get(), length);
+                int res = uncompress(filtered_data.get(), &len, buf.get(), length);
                 if(res == Z_OK) {
-                    // unfinished
-                    // process filtering
-                    // https://zhuanlan.zhihu.com/p/106945903
+                    data_.reset(new std::uint8_t[data_width * data_height]);
+                    for(std::uint32_t i = 0; i < data_height; i++) {
+                        std::uint32_t data_begin = i * data_width;
+                        std::uint32_t filter_begin = i * (data_width + 1);
+                        memcpy(data_.get() + data_begin, filtered_data.get() + filter_begin + 1, data_width);
+                        switch(filtered_data[filter_begin]) {
+                            case 0x00:
+                                break;
+                            case 0x01: {
+                                for(std::uint32_t k = data_begin + bpp; k < data_begin + data_width; k++)
+                                    data_[k] = data_[k] + data_[k - bpp];
+                                break;
+                            }
+                            case 0x02: {
+                                if(i == 0) goto failed;
+                                for(std::uint32_t k = data_begin; k < data_begin + data_width; k++)
+                                    data_[k] = data_[k] + data_[k - data_width];
+                                break;
+                            }
+                            case 0x03: {
+                                if(i == 0) goto failed;
+                                for(std::uint32_t k = data_begin + bpp; k < data_begin + data_width; k++)
+                                    data_[k] = data_[k] + ((int) data_[k - bpp] + (int) data_[k - data_width]) / 2;
+                                break;
+                            }
+                            case 0x04: {
+                                if(i == 0) goto failed;
+                                for(std::uint32_t k = data_begin + bpp; k < data_begin + data_width; k++) {
+                                    int v = abs((int) data_[k - bpp] - (int) data_[k - data_width - bpp]);
+                                    int h = abs((int) data_[k - data_width] - (int) data_[k - data_width - bpp]);
+                                    data_[k] = data_[k] + (v < h ? data_[k - data_width] : data_[k - bpp]);
+                                }
+                                break;
+                            }
+                            default:
+                                goto failed;
+                        }
+                    }
                     break;
                 }else if(res == Z_MEM_ERROR) {
                     if(++loop_count < 10)
