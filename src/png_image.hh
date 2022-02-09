@@ -5,7 +5,6 @@
 // This library currently only support read true color image (24 or 32 bits).
 // This library require C++17 and zlib
 
-
 #ifndef _PNG_IMAGE_HH_
 #define _PNG_IMAGE_HH_
 
