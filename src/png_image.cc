@@ -33,11 +33,11 @@ inline constexpr std::uint32_t reverseEndian(std::uint32_t val) {
 }
 
 inline std::uint32_t calCRC32(PNGDataBlockType type, const std::uint8_t* data, size_t length) {
-    std::uint8_t buf[4 + length];
+    std::shared_ptr<std::uint8_t[]> buf(new std::uint8_t[4 + length]);
     std::uint32_t type_val = reverseEndian((std::uint32_t) type);
-    memcpy(buf, (const char*) &type_val, 4);
-    memcpy(buf + 4, data, length);
-    return crc32(0, buf, 4 + length);
+    memcpy(buf.get(), (const char*) &type_val, 4);
+    memcpy(buf.get() + 4, data, length);
+    return crc32(0, buf.get(), 4 + length);
 }
 
 PNGImage::PNGImage(): header_(), data_() {}
@@ -46,6 +46,16 @@ PNGImage::PNGImage(const PNGImage& image):
         header_(image.header_), 
         data_(new std::uint8_t[sizeof(std::uint8_t) * image.size()]) {
     memcpy(data_.get(), image.data_.get(), sizeof(std::uint8_t) * image.size());
+}
+
+inline std::uint8_t paethPredictor(std::uint8_t a, std::uint8_t b, std::uint8_t c) {
+    int base = a + b - c;
+    int pa = abs(base - (int) a);
+    int pb = abs(base - (int) b);
+    int pc = abs(base - (int) c);
+    if(pa <= pb && pa <= pc) return a;
+    else if(pb <= pc) return b;
+    else return c;
 }
 
 bool PNGImage::readPNG(const std::string& png_file_name) {
@@ -104,16 +114,20 @@ bool PNGImage::readPNG(const std::string& png_file_name) {
                             }
                             case 0x03: {
                                 if(i == 0) goto failed;
+                                for(std::uint32_t k = data_begin; k < data_begin + bpp; k++) {
+                                    data_[k] = data_[k] + data_[k - data_width] / 2;
+                                }
                                 for(std::uint32_t k = data_begin + bpp; k < data_begin + data_width; k++)
-                                    data_[k] = data_[k] + ((int) data_[k - bpp] + (int) data_[k - data_width]) / 2;
+                                    data_[k] = data_[k] + (std::uint8_t) (((int) data_[k - bpp] + (int) data_[k - data_width]) / 2);
                                 break;
                             }
                             case 0x04: {
                                 if(i == 0) goto failed;
+                                for(std::uint32_t k = data_begin; k < data_begin + bpp; k++) {
+                                    data_[k] = data_[k] + data_[k - data_width];
+                                }
                                 for(std::uint32_t k = data_begin + bpp; k < data_begin + data_width; k++) {
-                                    int v = abs((int) data_[k - bpp] - (int) data_[k - data_width - bpp]);
-                                    int h = abs((int) data_[k - data_width] - (int) data_[k - data_width - bpp]);
-                                    data_[k] = data_[k] + (v < h ? data_[k - data_width] : data_[k - bpp]);
+                                    data_[k] = data_[k] + paethPredictor(data_[k - bpp], data_[k - data_width], data_[k - data_width - bpp]);
                                 }
                                 break;
                             }
@@ -167,4 +181,61 @@ bool PNGImage::readPNG(const std::string& png_file_name) {
 failed:
     file.close();
     return false;
+}
+
+bool PNGImage::generatePNG(const std::string& png_file_name) {
+    std::ofstream file(png_file_name, std::ios::out | std::ios::binary | std::ios::trunc);
+
+    if(!file.is_open())
+        return false;
+
+    std::uint64_t sign = reverseEndian(kPngSign);
+    file.write((char*) &sign, 8);
+
+    std::uint32_t length;
+    std::uint32_t ascii;
+    std::uint32_t crc;
+
+    // IHDR
+    PNGImageHeader header = header_;
+    header.width = reverseEndian(header.width);
+    header.height = reverseEndian(header.height);
+
+    length = reverseEndian((std::uint32_t) 13);
+    ascii = reverseEndian((std::uint32_t) IHDR);
+    crc = reverseEndian(calCRC32(IHDR, (std::uint8_t*) &header, 13));
+
+    file.write((char*) &length, 4);
+    file.write((char*) &ascii, 4);
+    file.write((char*) &header, 13);
+    file.write((char*) &crc, 4);
+
+    // IDAT
+    int bpp = (header_.color_type == TRUE_COLOR ? 3 : 4);
+    uLongf len = (header_.width * bpp + 1) * header_.height;
+    std::shared_ptr<std::uint8_t[]> buf(new std::uint8_t[len]);
+    for(std::uint32_t i = 0; i < header_.height; i++) {
+        std::uint32_t buf_begin = i * (header_.width * bpp + 1);
+        std::uint32_t data_begin = i * header_.width * bpp;
+        buf[buf_begin] = 0x00;
+        memcpy(buf.get() + buf_begin + 1, data_.get() + data_begin, header_.width * bpp);
+    }
+
+    std::shared_ptr<std::uint8_t[]> compressed_data(new std::uint8_t[len]);
+    compress(compressed_data.get(), &len, buf.get(), len);
+
+    length = reverseEndian((std::uint32_t) len);
+    ascii = reverseEndian((std::uint32_t) IDAT);
+    crc = reverseEndian(calCRC32(IDAT, compressed_data.get(), len));
+
+    file.write((char*) &length, 4);
+    file.write((char*) &ascii, 4);
+    file.write((char*) compressed_data.get(), len);
+    file.write((char*) &crc, 4);
+
+    // IEND
+    std::uint8_t iend[12] = {0x00, 0x00, 0x00, 0x00, 0x49, 0x45, 0x4E, 0x44, 0xAE, 0x42, 0x60, 0x82};
+    file.write((char*) iend, 12);
+
+    return true;
 }
