@@ -1,6 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include "material.hh"
+#include "png_image.hh"
 
 const Material Material::default_material = {
     "Default Material",
@@ -12,6 +13,18 @@ const Material Material::default_material = {
     nullptr
 };
 
-Texture::Texture(const std::string& texture_file_name): good_(false) {
-    // unfinished
+Texture::Texture(): width_(0), height_(0), data_(nullptr), alpha_(false) {}
+
+bool Texture::loadTexture(const std::string& texture_file_name) {
+    PNGImage image;
+
+    if(bool res = image.readPNG(texture_file_name); !res)
+        return false;
+
+    width_ = image.width();
+    height_ = image.height();
+    alpha_ = image.hasAlpha();
+    data_ = image.sharedData();
+
+    return true;
 }
