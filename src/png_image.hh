@@ -70,6 +70,7 @@ public:
     // when the png image has no alpha, it will be: r g b r g b r g b ...
     // when the png image has alpha, it will be: r g b a r g b a ...
     std::uint8_t* data() const noexcept { return data_.get(); }
+    std::shared_ptr<std::uint8_t[]> sharedData() const noexcept { return data_; }
 
     size_t size() const noexcept { return header_.width * header_.height; }
 

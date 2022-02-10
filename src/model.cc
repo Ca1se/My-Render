@@ -1,5 +1,6 @@
 #include <fstream>
 #include <iostream>
+#include <memory>
 #include "material.hh"
 #include "math_utils.hh"
 #include "model.hh"
@@ -113,24 +114,23 @@ void ObjLoader::loadMaterial(const std::string& mtl_file_name) {
         }else if(line[0] == 'i' && line.substr(0, 5) == "illum") {
             sscanf(line.data(), "illum %d", &material->illum_mode);
         }else if(line[0] == 'm') {
+            std::shared_ptr<Texture> texture(new Texture());
             // map_Ka texture path
             if(line.substr(0, 6) == "map_Ka") {
                 sscanf(line.data(), "map_Ka %s", buf);
-                Texture* tex = new Texture(buf);
-                if(!tex->good()) {
-                    delete tex;
-                    continue;
+                if(bool res = texture->loadTexture(buf); res) {
+                    material->ambient_texture.swap(texture);
+                }else {
+                    std::cerr << "Ambient texture load failed: " << buf << "\n";
                 }
-                material->ambient_texture.reset(tex);
             // map_Kd texture path
             }else if(line.substr(0, 6) == "map_Kd") {
                 sscanf(line.data(), "map_Kd %s", buf);
-                Texture* tex = new Texture(buf);
-                if(!tex->good()) {
-                    delete tex;
-                    continue;
+                if(bool res = texture->loadTexture(buf); res) {
+                    material->diffuse_texture.swap(texture);
+                }else {
+                    std::cerr << "Diffuse texture load failed: " << buf << "\n";
                 }
-                material->diffuse_texture.reset(tex);
             }
         }
     }

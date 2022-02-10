@@ -8,10 +8,17 @@
 
 class Texture {
 private:
-    bool good_;
+    size_t width_;
+    size_t height_;
+    bool alpha_;
+    std::shared_ptr<std::uint8_t[]> data_;
+
 public:
-    Texture(const std::string& texture_file_name);
-    bool good() const noexcept { return good_; }
+    Texture();
+    bool loadTexture(const std::string& texture_file_name);
+    Vector<std::uint8_t, 3> get(int u, int v) const noexcept {
+        // unfinished
+    }
 };
 
 enum IllumMode {
