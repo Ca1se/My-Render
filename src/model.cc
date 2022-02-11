@@ -26,7 +26,7 @@ void ObjLoader::loadModel(const std::string& obj_file_path) {
     Model* model = &loaded_models_.emplace_back();
     bool first_model = true;
     int use_material = 0;
-    char buf[50];
+    char buf[200];
 
     while(lines.hasNextLine()) {
         std::string_view line = lines.nextLine();
@@ -84,7 +84,7 @@ void ObjLoader::loadMaterial(const std::string& mtl_file_name) {
     file.close();
 
     Lines lines(mtl_str);
-    char buf[50];
+    char buf[200];
 
     Material* material = nullptr;
 
