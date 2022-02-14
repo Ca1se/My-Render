@@ -11,4 +11,10 @@ struct VertexShader {
     }
 };
 
+struct FragmentShader {
+    Vector3f ka;
+    Vector3f kd;
+    Vector3f ks;
+};
+
 #endif
