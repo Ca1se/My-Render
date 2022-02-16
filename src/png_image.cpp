@@ -186,8 +186,10 @@ failed:
 bool PNGImage::generatePNG(const std::string& png_file_name) {
     std::ofstream file(png_file_name, std::ios::out | std::ios::binary | std::ios::trunc);
 
-    if(!file.is_open())
+    if(!file.is_open()) {
+        file.close();
         return false;
+    }
 
     std::uint64_t sign = reverseEndian(kPngSign);
     file.write((char*) &sign, 8);
@@ -236,6 +238,7 @@ bool PNGImage::generatePNG(const std::string& png_file_name) {
     // IEND
     std::uint8_t iend[12] = {0x00, 0x00, 0x00, 0x00, 0x49, 0x45, 0x4E, 0x44, 0xAE, 0x42, 0x60, 0x82};
     file.write((char*) iend, 12);
+    file.close();
 
     return true;
 }

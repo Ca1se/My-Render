@@ -1,11 +1,15 @@
 #ifndef _PIPELINE_HPP_
 #define _PIPELINE_HPP_
 
+#include <algorithm>
+#include <cstring>
+#include <limits>
 #include <vector>
+#include <array>
 #include "matrix.hpp"
 #include "model.hpp"
-#include "shader.hpp"
 #include "macro.hpp"
+#include "phong_shader.hpp"
 
 enum Plane {
     MINIMAL,
@@ -18,7 +22,7 @@ enum Plane {
 };
 
 struct Payload {
-    Vector4f coords[3];
+    Vector4f homo_coords[3];
     Vector3f world_coords[3];
     Vector3f normals[3];
     Vector2f uvs[3];
@@ -36,31 +40,34 @@ struct Payload {
 
 class Pipeline {
 private:
-    static size_t width;
-    static size_t height;
-    static Payload payload;
-    static VertexShader vertex_shader;
-    static FragmentShader fragment_shader;
-    static std::vector<float> zbuffer;
-    static std::vector<std::uint8_t> framebuffer;
+    size_t width;
+    size_t height;
+    Payload payload;
+    std::vector<float> zbuffer;
+    std::vector<std::uint8_t> framebuffer;
 
 public:
-    static void set_vertex_shader(const VertexShader& shader) noexcept { vertex_shader = shader; }
-    static void set_fragment_shader(const FragmentShader& shader) noexcept { fragment_shader = shader; }
-    static void setRenderingSize(size_t width, size_t height) noexcept {
-        Pipeline::width = width;
-        Pipeline::height = height;
+    void setRenderingSize(size_t width, size_t height) noexcept {
+        this->width = width;
+        this->height = height;
         zbuffer.resize(width * height);
         framebuffer.resize(width * height * 4);
     }
 
-    static void draw(const Model &model);
+    void clearBuffer() noexcept {
+        std::fill(zbuffer.begin(), zbuffer.end(), std::numeric_limits<float>::infinity());
+        std::fill(framebuffer.begin(), framebuffer.end(), 255);
+    }
+
+    void draw(const Model& model, Shader shader);
+    std::uint8_t* data() noexcept { return framebuffer.data(); }
 
 private:
-    static void prepareVertex(int index1, int index2, int index3) noexcept;
-    static int homogeneous_clip();
-    static int clipWithPlane(Plane clip_plane, int vertex_num);
-    static void rasterize();
+    void prepareVertex(const std::array<int, 3>& tri_index, Shader& shader) noexcept;
+    int homogeneous_clip();
+    int clipWithPlane(Plane clip_plane, int vertex_num);
+    void rasterize(Shader shader);
+    void setColor(int x, int y, const Vector3f& color) noexcept;
 };
 
 

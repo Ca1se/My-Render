@@ -150,6 +150,7 @@ public:
 
     template <typename U, IsNumber<U> = 0>
     Matrix<T, Rows, Cols> operator/ (U number) const noexcept {
+        assert(number != 0);
         Matrix<T, Rows, Cols> ret(*this);
 
         for(int i = 0; i < ret.size(); i++) {
@@ -332,22 +333,30 @@ public:
         return std::sqrt(squareNorm());
     }
 
+    /*
     void normalize() noexcept {
         auto n = norm();
+        assert(n != 0);
         for(auto& it: *this) {
             it /= n;
         }
     }
+    */
 
     Vector<T, Size> normalized() const noexcept {
         Vector<T, Size> ret(*this);
         auto n = norm();
+        assert(n != 0);
 
         for(auto& it: ret) {
             it /= n;
         }
 
         return ret;
+    }
+
+    void normalize() noexcept {
+        (*this) = this->normalized();
     }
 
     template <typename U>
