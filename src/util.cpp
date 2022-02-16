@@ -1,9 +1,10 @@
 #include <cmath>
+#include "camera.hpp"
 #include "util.hpp"
 #include "matrix.hpp"
 #include "macro.hpp"
 
-inline Matrix4f calViewMatrix(const Camera& camera) {
+Matrix4f calViewMatrix(const Camera& camera) {
     Vector3f w = camera.gaze / -camera.gaze.norm();
     Vector3f txw = camera.view_up.cross(w);
     Vector3f u = txw / txw.norm();
@@ -13,11 +14,12 @@ inline Matrix4f calViewMatrix(const Camera& camera) {
     return Matrix4f{
         u.x(), u.y(), u.z(), -u.x() * e.x() - u.y() * e.y() - u.z() * e.z(),
         v.x(), v.y(), v.z(), -v.x() * e.x() - v.y() * e.y() - v.z() * e.z(),
-        w.x(), w.y(), w.z(), -w.x() * e.x() - w.y() * e.y() - w.z() * e.z()
+        w.x(), w.y(), w.z(), -w.x() * e.x() - w.y() * e.y() - w.z() * e.z(),
+        0, 0, 0, 1
     };
 }
 
-inline Matrix4f calPerspectiveMatrix(float fov, float aspect, float near, float far) {
+Matrix4f calPerspectiveMatrix(float fov, float aspect, float near, float far) {
     float r = fov / 2 / 180 * PI;
     float top = -tan(r) * near;
     float right = top * aspect;
@@ -28,4 +30,18 @@ inline Matrix4f calPerspectiveMatrix(float fov, float aspect, float near, float 
         0, 0, (near + far) / (near - far), -2 * near * far / (near - far),
         0, 0, 1, 0
     };
+}
+
+Vector4f toVector4f(const Vector3f& vec3, float w) noexcept {
+    return Vector4f{ vec3.x(), vec3.y(), vec3.z(), w };
+}
+
+void setPhongInfo(Shader& shader, const Camera& camera) noexcept {
+    shader.ka = { 0.25, 0.25, 0.25 };
+    shader.kd = { 0.25, 0.25, 0.25 };
+    shader.ks = { 0.7, 0.7, 0.7 };
+
+    shader.viewer_pos = camera.position;
+    shader.light_pos = {-30, 30, 30 };
+    shader.light_intensity = { 2000, 2000, 2000 };
 }
