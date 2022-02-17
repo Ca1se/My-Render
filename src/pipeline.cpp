@@ -17,7 +17,7 @@ inline void Pipeline::prepareVertex(const std::array<int, 3>& tri_index, Shader&
     }
 }
 
-void Pipeline::draw(const Model& model, Shader shader) {
+void Pipeline::renderingModel(const Model& model, Shader shader) {
     for(int i = 0; i < model.faces.size(); i++) {
         auto vertex = model.faces[i].vertex;
         for(int j = 0; j < 3; j++) {

@@ -1,49 +1,117 @@
+#include <cassert>
+#include <cstdio>
 #include <cstring>
 #include <cstdint>
-#include <iostream>
+#include <memory>
 #include <vector>
+#include <string>
 #include "camera.hpp"
 #include "matrix.hpp"
+#include "model.hpp"
+#include "phong_shader.hpp"
 #include "pipeline.hpp"
 #include "util.hpp"
+#include "macro.hpp"
 
-static const int kWindowWidth = 800;
-static const int kWindowHeight = 600;
+static const char* const kHelpMessage = "--help                                 display this help message\n"
+                                        "--model MODEL1 [MODEL2] ...            load models, model names should be separated by commas, only            \n"
+                                        "                                       support obj format model file                                           \n"
+                                        "--texture TEXTURE1 [TEXTURE2] ...      load textures, model and texture should correspond to each other,       \n"
+                                        "                                       when you don't want to specify a texture for the model, texture         \n"
+                                        "                                       name should be \"null\", only support obj format model and png format   \n"
+                                        "--window-size WIDTHxHEIGHT             set the window width and height, default window size is 800x600         \n";
 
 int main(int argc, char** argv) {
+    if(argc < 2) {
+        printf(kHelpMessage);
+        return 0;
+    }
+
+    int window_width = 800;
+    int window_height = 600;
+    bool model = false;
+    bool texture = false;
     ObjLoader loader;
-    loader.loadModel("model/cottage/cottage.obj");
+    std::vector<std::shared_ptr<Model>> models;
+    std::vector<std::shared_ptr<Texture>> textures;
+
+    for(int i = 1; i < argc; i++) {
+        if(!strcmp(argv[i], "--help")) {
+            printf(kHelpMessage);
+            return 0;
+        }else if(!strcmp(argv[i], "--model")){
+            if(i + 1 >= argc) {
+                printMissArg(argv[0]);
+                return 0;
+            }
+            model = true;
+            texture = false;
+        }else if(!strcmp(argv[i], "--texture")) {
+            if(i + 1 >= argc) {
+                printMissArg(argv[0]);
+                return 0;
+            }
+            model = false;
+            texture = true;
+        }else if(!strcmp(argv[i], "--window-size")) {
+            if(i + 1 >= argc) {
+                printMissArg(argv[0]);
+                return 0;
+            }
+            model = texture = false;
+            i++;
+            if(char* p = strchr(argv[i], 'x'); p != nullptr) {
+                std::string arg(argv[i]);
+                try {
+                    window_width = std::stoi(arg.substr(0, p - argv[i]));
+                    window_height = std::stoi(arg.substr(p - argv[i] + 1));
+                }catch(...) {
+                    printWrongArg(argv[0], argv[i]);
+                    return 0;
+                }
+            }else {
+                printWrongArg(argv[0], argv[i]);
+                return 0;
+            }
+        }else if(model) {
+            auto m = loader.loadModel(argv[i]);
+            models.push_back(m);
+        }else if(texture) {
+            if(!strcmp(argv[i], "null")) {
+                textures.push_back(std::shared_ptr<Texture>{});
+            }else {
+                auto t = loader.loadTexture(argv[i]);
+                textures.push_back(t);
+            }
+        }
+    }
+
+    if(models.size() != textures.size()) {
+        printf("%s: the number of models and textures should be equal\n", argv[0]);
+        return 0;
+    }
+
+    Camera camera{ Vector3f{20, 0, 0}, Vector3f{-1, 0, 0}, Vector3f{0, 1, 0} };
 
     Pipeline pipeline;
-    pipeline.setRenderingSize(kWindowWidth, kWindowHeight);
-    pipeline.clearBuffer();
-
-    Camera camera{Vector3f{25, 25, 25}, Vector3f{-1, -1, -1}, Vector3f{0, 1, -1}};
-
-    // Matrix4f model_matrix = Matrix4f::Identity();
-    Matrix4f view_matrix = calViewMatrix(camera);
-    Matrix4f perspective_matrix = calPerspectiveMatrix(60, float(kWindowWidth) / kWindowHeight, -0.1, -10000);
+    pipeline.setRenderingSize(window_width, window_height);
 
     Shader shader;
-    shader.viewer_pos = camera.position;
-    shader.mvp = perspective_matrix * view_matrix;
-    shader.texture = loader.loaded_materials()[1].diffuse_texture;
+    setPhongInfo(shader);
 
-    setPhongInfo(shader, camera);
+    Matrix4f perspective_matrix = calPerspectiveMatrix(60, float(window_width) / window_height, -0.1, -10000);
 
-    pipeline.draw(loader.loaded_models()[0], shader);
+    while(true) {
+        pipeline.clearBuffer();
 
-    PNGImage image;
-    auto& header = image.header();
-    header = shader.texture->image_->header();
+        updateShader(shader, camera, perspective_matrix);
+        for(int i = 0; i < models.size(); i++) {
+            shader.texture = textures[i];
+            pipeline.renderingModel(*models[i], shader);
+        }
 
-    header.color_type = TRUE_COLOR_ALPHA;
-    header.height = kWindowHeight;
-    header.width = kWindowWidth;
-
-    image.data_.reset(new std::uint8_t[kWindowWidth * kWindowHeight * 4]);
-    memcpy(image.data(), pipeline.data(), kWindowHeight * kWindowWidth * 4);
-    image.generatePNG("output.png");
+    }
+    
 
     return 0;
 }

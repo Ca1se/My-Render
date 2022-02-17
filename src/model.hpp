@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <cstdio>
+#include <memory>
 #include <string_view>
 #include <optional>
 #include <vector>
@@ -18,7 +19,6 @@ struct VertexInfo {
 };
 
 struct Face {
-    int material_index;
     VertexInfo vertex[3];
 };
 
@@ -60,20 +60,9 @@ private:
         }
     };
 
-private:
-    std::vector<Model> loaded_models_;
-    std::vector<Material> loaded_materials_;
-
 public:
-    ObjLoader();
-
-public:
-    void loadModel(const std::string& obj_file_name);
-    void loadMaterial(const std::string& mtl_file_name);
-
-    const std::vector<Model>& loaded_models() const { return loaded_models_; }
-    const std::vector<Material>& loaded_materials() const { return loaded_materials_; }
-
+    std::shared_ptr<Model> loadModel(const std::string& obj_file_name);
+    std::shared_ptr<Texture> loadTexture(const std::string& texture_file_name);
 
 private:
     static void praseVertex(std::string_view vector_line, std::vector<Vector3f>& vectices) {
@@ -91,9 +80,8 @@ private:
         sscanf(normal_line.data(), "vn %f %f %f", &result.x(), &result.y(), &result.z());
     }
 
-    static void praseFace(std::string_view face_line, std::vector<Face>& faces, int material_index) {
+    static void praseFace(std::string_view face_line, std::vector<Face>& faces) {
         auto& face1 = faces.emplace_back();
-        face1.material_index = material_index;
         int cnt = std::count(face_line.begin(), face_line.end(), '/');
         if(cnt == 6) {
             sscanf(face_line.data(), "f %d / %d / %d %d / %d / %d %d / %d / %d", 
@@ -124,7 +112,6 @@ private:
             face1.vertex[2].vertex_index = tmp[2][0], face1.vertex[2].uv_index = tmp[2][1], face1.vertex[2].normal_index = tmp[2][2];
 
             auto& face2 = faces.emplace_back();
-            face2.material_index = material_index;
             face2.vertex[0].vertex_index = tmp[0][0], face2.vertex[0].uv_index = tmp[0][1], face2.vertex[0].normal_index = tmp[0][2];
             face2.vertex[1].vertex_index = tmp[2][0], face2.vertex[1].uv_index = tmp[2][1], face2.vertex[1].normal_index = tmp[2][2];
             face2.vertex[2].vertex_index = tmp[3][0], face2.vertex[2].uv_index = tmp[3][1], face2.vertex[2].normal_index = tmp[3][2];
