@@ -14,7 +14,6 @@ struct Shader {
     Vector3f normals[3];
     Vector2f uvs[3];
 
-    
     Vector3f ka;
     Vector3f kd;
     Vector3f ks;

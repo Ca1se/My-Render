@@ -56,10 +56,12 @@ public:
 
     void clearBuffer() noexcept {
         std::fill(zbuffer.begin(), zbuffer.end(), std::numeric_limits<float>::infinity());
-        std::fill(framebuffer.begin(), framebuffer.end(), 255);
+        for(std::uint32_t i = 0; i < framebuffer.size(); i += 4) {
+            *(std::uint32_t*)(framebuffer.data() + i) = 0xff000000;
+        }
     }
 
-    void draw(const Model& model, Shader shader);
+    void renderingModel(const Model& model, Shader shader);
     std::uint8_t* data() noexcept { return framebuffer.data(); }
 
 private:

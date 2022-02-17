@@ -1,4 +1,5 @@
 #include <cmath>
+#include <cstdio>
 #include "camera.hpp"
 #include "util.hpp"
 #include "matrix.hpp"
@@ -36,12 +37,26 @@ Vector4f toVector4f(const Vector3f& vec3, float w) noexcept {
     return Vector4f{ vec3.x(), vec3.y(), vec3.z(), w };
 }
 
-void setPhongInfo(Shader& shader, const Camera& camera) noexcept {
+void setPhongInfo(Shader& shader) noexcept {
     shader.ka = { 0.25, 0.25, 0.25 };
     shader.kd = { 0.25, 0.25, 0.25 };
     shader.ks = { 0.7, 0.7, 0.7 };
 
-    shader.viewer_pos = camera.position;
     shader.light_pos = {-30, 30, 30 };
     shader.light_intensity = { 2000, 2000, 2000 };
+}
+
+void updateShader(Shader& shader, const Camera& camera, const Matrix4f& perspective_matrix) noexcept {
+    shader.viewer_pos = camera.position;
+    shader.mvp = perspective_matrix * calViewMatrix(camera);
+}
+
+void printMissArg(const char* name) noexcept {
+    printf("%s: missing argument\n", name);
+    printf("Try '%s --help' for more information\n", name);
+}
+
+void printWrongArg(const char* name, const char* arg) noexcept {
+    printf("%s: wrong argument: %s\n", name, arg);
+    printf("Try '%s --help' for more information\n", name);
 }

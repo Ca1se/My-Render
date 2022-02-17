@@ -29,18 +29,4 @@ enum IllumMode {
     PHONG
 };
 
-struct Material {
-    static const Material default_material;
-
-    std::string material_name;
-    Vector3f ka;
-    Vector3f kd;
-    Vector3f ks;
-    IllumMode illum_mode;
-    std::shared_ptr<Texture> ambient_texture;
-    std::shared_ptr<Texture> diffuse_texture;
-};
-
-
-
 #endif // _MATERIAL_HPP_
