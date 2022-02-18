@@ -93,7 +93,7 @@ int main(int argc, char** argv) {
         return 0;
     }
 
-    Camera camera{ Vector3f{-20, 20, 20}, Vector3f{1, -1, -1}, Vector3f{0, 1, -1} };
+    Camera camera{ Vector3f{-40, 20, 20}, Vector3f{1, -1, -1}, Vector3f{0, 1, -1} };
 
     Pipeline pipeline;
     pipeline.setRenderingSize(window_width, window_height);

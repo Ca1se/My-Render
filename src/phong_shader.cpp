@@ -16,12 +16,12 @@ Vector3f Shader::fragmentShader(float alpha, float beta, float gamma, float corr
             uvs[1] * beta / homo_coords[1].w() + 
             uvs[2] * gamma / homo_coords[2].w()) * corrector;
     
-    kd = [&]() {
-        if(texture) {
-            auto color = texture->sample(uv[0], uv[1]);
-            return Vector3f{ color[0] / 255.f, color[1] / 255.f, color[2] / 255.f };
-        }else return Vector3f{ 0.3, 0.3, 0.3 };
-    }();
+    
+    kd = { 0.3, 0.3, 0.3 };
+    if(texture) {
+        auto color = texture->sample(uv[0], uv[1]);
+        kd = { color[0] / 255.f, color[1] / 255.f, color[2] / 255.f };
+    }
     
     Vector3f light_vec = light_pos - pos;
     Vector3f view_vec = viewer_pos - pos;
