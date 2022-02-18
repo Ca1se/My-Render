@@ -2,6 +2,7 @@
 #include <cstdio>
 #include <cstring>
 #include <cstdint>
+#include <ctime>
 #include <memory>
 #include <vector>
 #include <string>
@@ -12,6 +13,7 @@
 #include "pipeline.hpp"
 #include "util.hpp"
 #include "macro.hpp"
+#include "window.hpp"
 
 static const char* const kHelpMessage = "--help                                 display this help message\n"
                                         "--model MODEL1 [MODEL2] ...            load models, model names should be separated by commas, only            \n"
@@ -91,7 +93,7 @@ int main(int argc, char** argv) {
         return 0;
     }
 
-    Camera camera{ Vector3f{20, 0, 0}, Vector3f{-1, 0, 0}, Vector3f{0, 1, 0} };
+    Camera camera{ Vector3f{-20, 20, 20}, Vector3f{1, -1, -1}, Vector3f{0, 1, -1} };
 
     Pipeline pipeline;
     pipeline.setRenderingSize(window_width, window_height);
@@ -101,7 +103,12 @@ int main(int argc, char** argv) {
 
     Matrix4f perspective_matrix = calPerspectiveMatrix(60, float(window_width) / window_height, -0.1, -10000);
 
-    while(true) {
+    Window window(window_width, window_height);
+    window.display();
+
+    std::uint32_t frame_count = 0;
+    clock_t now, begin = clock();
+    while(!window.isClosed()) {
         pipeline.clearBuffer();
 
         updateShader(shader, camera, perspective_matrix);
@@ -109,7 +116,14 @@ int main(int argc, char** argv) {
             shader.texture = textures[i];
             pipeline.renderingModel(*models[i], shader);
         }
-
+        window.draw(pipeline.data(), 0, 0, window_width, window_height);
+        
+        if(now = clock(); (now - begin) / CLOCKS_PER_SEC) {
+            printf("fps: %u\n", frame_count);
+            frame_count = 0;
+            begin = now;
+        }
+        frame_count++;
     }
     
 

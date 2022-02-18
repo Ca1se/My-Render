@@ -27,12 +27,13 @@ Vector3f Shader::fragmentShader(float alpha, float beta, float gamma, float corr
     Vector3f view_vec = viewer_pos - pos;
     Vector3f light_norm = light_vec.normalized();
     Vector3f view_norm = view_vec.normalized();
+    // wont use it
     float square_distance = light_vec.squareNorm();
     normal.normalize();
 
     Vector3f ambient = ka.cwiseProduct(kd);
-    Vector3f diffuse = kd.cwiseProduct(light_intensity / square_distance * std::max(0.f, light_norm.dot(normal)));
-    Vector3f specular = ks.cwiseProduct(light_intensity / square_distance * std::pow(std::max(0.f, Vector3f{light_norm + view_norm}.normalized().dot(normal)), 100));
+    Vector3f diffuse = kd.cwiseProduct(light_intensity /* / square_distance */ * std::max(0.f, light_norm.dot(normal)));
+    Vector3f specular = ks.cwiseProduct(light_intensity /* / square_distance */ * std::pow(std::max(0.f, Vector3f{light_norm + view_norm}.normalized().dot(normal)), 100));
 
     return (ambient + diffuse + specular) * 255.f;
 }
