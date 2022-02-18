@@ -38,12 +38,12 @@ Vector4f toVector4f(const Vector3f& vec3, float w) noexcept {
 }
 
 void setPhongInfo(Shader& shader) noexcept {
-    shader.ka = { 0.25, 0.25, 0.25 };
+    shader.ka = { 0.35, 0.35, 0.35 };
     shader.kd = { 0.25, 0.25, 0.25 };
     shader.ks = { 0.7, 0.7, 0.7 };
 
     shader.light_pos = {-30, 30, 30 };
-    shader.light_intensity = { 2000, 2000, 2000 };
+    shader.light_intensity = { 1, 1, 1 };
 }
 
 void updateShader(Shader& shader, const Camera& camera, const Matrix4f& perspective_matrix) noexcept {
