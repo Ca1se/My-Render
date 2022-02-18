@@ -4,10 +4,10 @@ project(render)
 set(CMAKE_CXX_STANDARD 17)
 
 file(GLOB SOURCES
-        ${PROJECT_SOURCE_DIR}/src/*.cc
-        ${PROJECT_SOURCE_DIR}/src/*.hh
+        ${PROJECT_SOURCE_DIR}/src/*.cpp
+        ${PROJECT_SOURCE_DIR}/src/*.hpp
 )
 
 add_executable(${PROJECT_NAME} ${SOURCES})
 
-target_link_libraries(${PROJECT_NAME} z xcb)
+target_link_libraries(${PROJECT_NAME} z xcb xcb-image)
