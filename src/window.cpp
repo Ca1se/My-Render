@@ -171,23 +171,53 @@ void Window::handleEvent(Camera& camera) noexcept {
                         x.z(), y.z(), z.z()
                     };
 
-                    Vector3f viewspace_view = Vector3f::Zero();
-                    Vector3f viewspace_target = viewspace * (camera.target - camera.view);
-                    Vector3f viewspace_up = viewspace * (camera.up - camera.view);
+                    Vector3f vs_view = Vector3f::Zero();
+                    Vector3f vs_target = viewspace * (camera.target - camera.view);
                     
-                    Vector2f zx = rotatePoint2D(Vector2f{ viewspace_view.z(), viewspace_view.x() }, -0.15 * x_offset, Vector2f{ viewspace_target.z(), viewspace_target.x() });
-                    viewspace_view.z() = zx.x();
-                    viewspace_view.x() = zx.y();
+                    Vector2f zx = rotatePoint2D(Vector2f{ 0, 0 }, -0.15 * x_offset, Vector2f{ vs_target.z(), vs_target.x() });
+                    vs_view.z() = zx.x();
+                    vs_view.x() = zx.y();
 
-                    Matrix3f viewspace_a{
-                        
+                    camera.view = viewspace.transpose() * vs_view + camera.view;
+
+                    /*
+                    Vector3f new_z = Vector3f{ camera.view - camera.target }.normalized();
+                    Vector3f new_x = y.cross(new_z).normalized();
+                    Vector3f new_y = new_z.cross(new_x).normalized();
+
+                    Matrix3f new_viewspace{
+                        new_x.x(), new_y.x(), new_z.x(),
+                        new_x.y(), new_y.y(), new_z.y(),
+                        new_x.z(), new_y.z(), new_z.z()
                     };
 
-                    Vector2f zy = rotatePoint2D(Vector2f{ viewspace_view.z(), viewspace_view.y() }, -0.15 * y_offset, Vector2f{ viewspace_target.z(), viewspace_target.y() });
-                    viewspace_view.z() = zy.x();
-                    viewspace_view.y() = zy.y();
+                    Vector3f new_vs_view = Vector3f::Zero();
+                    Vector3f new_vs_target = new_viewspace * (camera.target - camera.view);
+
+                    Vector2f zy = rotatePoint2D(Vector2f{ 0, 0 }, -0.15 * y_offset, Vector2f{ new_vs_target.z(), new_vs_target.y() });
+                    new_vs_view.z() = zy.x();
+                    new_vs_view.y() = zy.y();
+
+                    camera.view = new_viewspace.transpose() * new_vs_view + camera.view;
+                    Vector3f final_z = Vector3f{ camera.view - camera.target }.normalized();
+                    camera.up = final_z.cross(new_x).normalized();
+                    */
+
+                    /*
+                    Vector3f new_z = Vector3f{ vs_view - vs_target }.normalized();
+                    Vector3f new_x = y.cross(new_z);
                     
-                    camera.view = viewspace.transpose() * viewspace_view + camera.view;
+
+                    
+
+                    
+
+                    Vector3f final_z = Vector3f{ new_vs_view - new_vs_target }.normalized();
+                    // camera.up = new_x.cross(final_z);
+                    
+                    Vector3f tmp = new_viewspace.transpose() * new_vs_view + vs_view;
+                    camera.view = viewspace.transpose() * tmp + camera.view;
+                    */
                 }
 
                 break;
