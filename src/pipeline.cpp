@@ -1,47 +1,16 @@
 #include <array>
+#include <cmath>
 #include <iostream>
+#include <thread>
 #include <tuple>
+#include <vector>
 #include "pipeline.hpp"
 #include "macro.hpp"
 #include "model.hpp"
 #include "util.hpp"
 
-inline void Pipeline::prepareVertex(const std::array<int, 3>& tri_index, Shader& shader) noexcept {
-    for(int i = 0; i < 3; i++) {
-        payload.homo_coords[i] = payload.clipped_coords_b[tri_index[i]];
 
-        shader.homo_coords[i]  = payload.homo_coords[i];
-        shader.world_coords[i] = payload.clipped_world_coords_b[tri_index[i]];
-        shader.normals[i]      = payload.clipped_normals_b[tri_index[i]];
-        shader.uvs[i]          = payload.clipped_uvs_b[tri_index[i]];
-    }
-}
-
-void Pipeline::renderingModel(const Model& model, Shader shader) {
-    for(int i = 0; i < model.faces.size(); i++) {
-        auto vertex = model.faces[i].vertex;
-        for(int j = 0; j < 3; j++) {
-            payload.world_coords[j] = model.vertices[vertex[j].vertex_index];
-            payload.homo_coords[j]  = shader.vertexShader(payload.world_coords[j]);
-            payload.normals[j]      = model.normals[vertex[j].normal_index];
-            payload.uvs[j]          = model.uv_coords[vertex[j].uv_index];
-
-            payload.clipped_coords_a[j] = payload.homo_coords[j];
-            payload.clipped_world_coords_a[j] = payload.world_coords[j];
-            payload.clipped_normals_a[j] = payload.normals[j];
-            payload.clipped_uvs_a[j] = payload.uvs[j];
-        }
-
-        int vertex_num = homogeneous_clip();
-
-        for(int j = 1; j < vertex_num - 1; j++) {
-            prepareVertex({0, j, j + 1}, shader);
-            rasterize(shader);
-        }
-    }
-}
-
-static bool is_inside_plane(Plane clip_plane, const Vector4f& vertex) {
+inline bool is_inside_plane(Plane clip_plane, const Vector4f& vertex) {
     switch (clip_plane) {
         case MINIMAL:
             return vertex.w() <= -MINIMAL_VAL;
@@ -64,7 +33,7 @@ static bool is_inside_plane(Plane clip_plane, const Vector4f& vertex) {
 
 // for the deduction of intersection ratio
 // refer to: https://fabiensanglard.net/polygon_codec/clippingdocument/Clipping.pdf
-static float get_intersect_ratio(Vector4f prev, Vector4f curv, Plane clip_plane) {
+inline float get_intersect_ratio(Vector4f prev, Vector4f curv, Plane clip_plane) {
 	switch (clip_plane) 
 	{
 		case MINIMAL:
@@ -86,7 +55,7 @@ static float get_intersect_ratio(Vector4f prev, Vector4f curv, Plane clip_plane)
 	}
 }
 
-int Pipeline::clipWithPlane(Plane clip_plane, int vertex_num) {
+static int clipWithPlane(Plane clip_plane, int vertex_num, Payload& payload) {
     bool is_odd = (bool) (clip_plane % 2);
 
     auto& in_coords         = (is_odd ? payload.clipped_coords_b : payload.clipped_coords_a);
@@ -126,15 +95,60 @@ int Pipeline::clipWithPlane(Plane clip_plane, int vertex_num) {
     return num;
 }
 
-int Pipeline::homogeneous_clip() {
+inline int homogeneous_clip(Payload& payload) {
     int num = 3;
-    num = clipWithPlane(MINIMAL, num);
-    num = clipWithPlane(RIGHT, num);
-    num = clipWithPlane(LEFT, num);
-    num = clipWithPlane(TOP, num);
-    num = clipWithPlane(BOTTOM, num);
-    num = clipWithPlane(NEAR, num);
-    return clipWithPlane(FAR, num);
+    num = clipWithPlane(MINIMAL, num, payload);
+    num = clipWithPlane(RIGHT, num, payload);
+    num = clipWithPlane(LEFT, num, payload);
+    num = clipWithPlane(TOP, num, payload);
+    num = clipWithPlane(BOTTOM, num, payload);
+    num = clipWithPlane(NEAR, num, payload);
+    return clipWithPlane(FAR, num, payload);
+}
+
+inline void prepareVertex(const std::array<int, 3>& tri_index, Payload& payload, Shader& shader) noexcept {
+    for(int i = 0; i < 3; i++) {
+        shader.homo_coords[i]  = payload.clipped_coords_b[tri_index[i]];
+        shader.world_coords[i] = payload.clipped_world_coords_b[tri_index[i]];
+        shader.normals[i]      = payload.clipped_normals_b[tri_index[i]];
+        shader.uvs[i]          = payload.clipped_uvs_b[tri_index[i]];
+
+        payload.homo_coords[i] = shader.homo_coords[i];
+    }
+}
+
+void Pipeline::renderingModel(const Model& model, Shader shader) {
+    int face_num = model.faces.size();
+    std::vector<std::thread> threads;
+    for(int i = 0; i < 6; i++) {
+        threads.emplace_back(&Pipeline::renderingTriangles, this, i, face_num, 7, model, shader);
+    }
+    
+    renderingTriangles(6, face_num, 7, model, shader);
+
+    for(int i = 0; i < 6; i++) {
+        threads[i].join();
+    }
+}
+
+void Pipeline::renderingTriangles(int begin, int end, int interval, const Model& model, Shader shader) {
+    Payload payload;
+    for(int i = begin; i < end; i += interval) {
+        auto vertex = model.faces[i].vertex;
+        for(int j = 0; j < 3; j++) {
+            payload.clipped_coords_a[j]         = shader.vertexShader(model.vertices[vertex[j].vertex_index]);
+            payload.clipped_world_coords_a[j]   = model.vertices[vertex[j].vertex_index];
+            payload.clipped_normals_a[j]        = model.normals[vertex[j].normal_index];
+            payload.clipped_uvs_a[j]            = model.uv_coords[vertex[j].uv_index];
+        }
+
+        int vertex_num = homogeneous_clip(payload);
+
+        for(int j = 1; j < vertex_num - 1; j++) {
+            prepareVertex({0, j, j + 1}, payload, shader);
+            rasterize(payload, shader);
+        }
+    }
 }
 
 inline std::tuple<float, float, float> computeBarycentricCoords2D(float x, float y, const Vector3f (&v)[3]) noexcept {
@@ -146,10 +160,10 @@ inline std::tuple<float, float, float> computeBarycentricCoords2D(float x, float
 }
 
 inline bool inside_triangle(float alpha, float beta, float gamma) noexcept {
-    return (alpha >= 0) && (beta >= 0) && (gamma >= 0);
+    return (alpha > 0) && (beta > 0) && (gamma > 0);
 }
 
-void Pipeline::rasterize(Shader shader) {
+void Pipeline::rasterize(const Payload& payload, const Shader& shader) {
     Vector3f screen_pos[3];
 
     for(int i = 0; i < 3; i++) {
@@ -164,9 +178,9 @@ void Pipeline::rasterize(Shader shader) {
     int y_min = height;
 
     float x, y;
-    for(auto & screen_po : screen_pos) {
-        x = screen_po.x();
-        y = screen_po.y();
+    for(auto & pos : screen_pos) {
+        x = pos.x();
+        y = pos.y();
         x_max = std::max(x_max, (int) std::ceil(x));
         x_min = std::min(x_min, (int) x);
         y_max = std::max(y_max, (int) std::ceil(y));
@@ -180,13 +194,21 @@ void Pipeline::rasterize(Shader shader) {
                 int index = y * width + x;
                 float corrector = 1 / (alpha / payload.homo_coords[0].w() + beta / payload.homo_coords[1].w() + gamma / payload.homo_coords[2].w());
                 float z = -corrector;
+                mux.lock();
                 if(zbuffer[index] > z) {
                     zbuffer[index] = z;
+                    mux.unlock();
                     Vector3f color = shader.fragmentShader(alpha, beta, gamma, corrector);
                     for(int i = 0; i < 3; i++) {
                         color[i] = std::max(0.f, std::min(255.f, color[i]));
                     }
-                    setColor(x, y, color);
+                    mux.lock();
+                    if(zbuffer[index] == z) {
+                        setColor(x, y, color);
+                    }
+                    mux.unlock();
+                }else {
+                    mux.unlock();
                 }
             }
         }
