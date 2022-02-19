@@ -96,27 +96,27 @@ void Window::handleEvent(Camera& camera) noexcept {
             case XCB_KEY_PRESS: {
                 xcb_key_press_event_t* ev = (xcb_key_press_event_t*) event;
                 if(ev->detail == 25) {
-                    Vector3f tz = 0.05f * z;
+                    Vector3f tz = 0.15f * z;
                     camera.view -= tz;
                     camera.target -= tz;
                 }else if(ev->detail == 39) {
-                    Vector3f tz = 0.05f * z;
+                    Vector3f tz = 0.15f * z;
                     camera.view += tz;
                     camera.target += tz;
                 }else if(ev->detail == 38) {
-                    Vector3f tx = 0.05f * x;
+                    Vector3f tx = 0.15f * x;
                     camera.view -= tx;
                     camera.target -= tx;
                 }else if(ev->detail == 40) {
-                    Vector3f tx = 0.05f * x;
+                    Vector3f tx = 0.15f * x;
                     camera.view += tx;
                     camera.target += tx;
                 }else if(ev->detail == 24) {
-                    Vector3f ty = 0.05f * y;
+                    Vector3f ty = 0.15f * y;
                     camera.view += ty;
                     camera.target += ty;
                 }else if(ev->detail == 26) {
-                    Vector3f ty = 0.05f * y;
+                    Vector3f ty = 0.15f * y;
                     camera.view -= ty;
                     camera.target -= ty;
                 }

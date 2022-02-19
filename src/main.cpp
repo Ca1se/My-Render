@@ -1,4 +1,5 @@
 #include <cassert>
+#include <chrono>
 #include <cstdio>
 #include <cstring>
 #include <cstdint>
@@ -107,7 +108,8 @@ int main(int argc, char** argv) {
     window.display();
 
     std::uint32_t frame_count = 0;
-    clock_t now, begin = clock();
+    using namespace std::chrono;
+    time_t now, begin = time(nullptr);
     while(!window.isClosed()) {
         pipeline.clearBuffer();
 
@@ -121,7 +123,7 @@ int main(int argc, char** argv) {
         }
         window.draw(pipeline.data(), 0, 0, window_width, window_height);
         
-        if(now = clock(); (now - begin) / CLOCKS_PER_SEC) {
+        if(now = time(nullptr); now - begin >= 1) {
             printf("fps: %u\n", frame_count);
             frame_count = 0;
             begin = now;
