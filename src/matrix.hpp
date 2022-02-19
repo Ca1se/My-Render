@@ -30,15 +30,14 @@ template <typename T, size_t Rows, size_t Cols,
         bool = std::is_arithmetic<T>::value>
 class Matrix;
 
+template <typename U>
+using IsNumber = typename std::enable_if<std::is_arithmetic<U>::value, int>::type;
+
 // The Base class, This class contains functions
 // that are available when the number of rows and
 // columns of the matrix are equal and when they are not.
 template <typename T, size_t Rows, size_t Cols>
 class Matrix<T, Rows, Cols, false, true> {
-public:
-    template <typename U>
-    using IsNumber = typename std::enable_if<std::is_arithmetic<U>::value, int>::type;
-
 private:
     static constexpr size_t size_ = (Rows * Cols);
 
@@ -149,6 +148,15 @@ public:
     }
 
     template <typename U, IsNumber<U> = 0>
+    Matrix<T, Rows, Cols>& operator*= (U number) noexcept {
+        for(int i = 0; i < this->size(); i++) {
+            (*this)[i] *= number;
+        }
+
+        return *this;
+    }
+
+    template <typename U, IsNumber<U> = 0>
     Matrix<T, Rows, Cols> operator/ (U number) const noexcept {
         assert(number != 0);
         Matrix<T, Rows, Cols> ret(*this);
@@ -158,6 +166,16 @@ public:
         }
 
         return ret;
+    }
+
+    template <typename U, IsNumber<U> = 0>
+    Matrix<T, Rows, Cols>& operator/= (U number) noexcept {
+        assert(number != 0);
+        for(int i = 0; i < this->size(); i++) {
+            (*this)[i] /= number;
+        }
+
+        return *this;
     }
 
     template <typename U, IsNumber<U> = 0>
@@ -185,6 +203,26 @@ public:
     }
 
     template <typename U, IsNumber<U> = 0>
+    Matrix<T, Rows, Cols>& operator+=
+            (const Matrix<U, Rows, Cols>& other_matrix)
+            noexcept {
+        for(int i = 0; i < this->size(); i++) {
+            (*this)[i] += other_matrix[i];
+        }
+
+        return *this;
+    }
+
+    template <typename U, IsNumber<U> = 0>
+    Matrix<T, Rows, Cols>& operator+= (U number) noexcept {
+        for(int i = 0; i < this->size(); i++) {
+            (*this)[i] += number;
+        }
+
+        return *this;
+    }
+
+    template <typename U, IsNumber<U> = 0>
     Matrix<T, Rows, Cols> operator-
             (const Matrix<U, Rows, Cols>& other_matrix)
             const noexcept {
@@ -205,6 +243,25 @@ public:
             ret[i] -= number;
         }
         return ret;
+    }
+
+    template <typename U, IsNumber<U> = 0>
+    Matrix<T, Rows, Cols>& operator-=
+            (const Matrix<U, Rows, Cols>& other_matrix)
+            noexcept {
+        for(int i = 0; i < this->size(); i++) {
+            (*this)[i] -= other_matrix[i];
+        }
+
+        return *this;
+    }
+
+    template <typename U, IsNumber<U> = 0>
+    Matrix<T, Rows, Cols>& operator-= (U number) noexcept {
+        for(int i = 0; i < this->size(); i++) {
+            (*this)[i] -= number;
+        }
+        return *this;
     }
 
     Matrix<T, Cols, Rows> transpose() const noexcept {
@@ -300,6 +357,16 @@ public:
     }
 
 };
+
+template <typename T, typename U, size_t Rows, size_t Cols, IsNumber<T> = 0>
+inline Matrix<U, Rows, Cols> operator*(T number, const Matrix<U, Rows, Cols>& matrix) {
+    return matrix * number;
+}
+
+template <typename T, typename U, size_t Rows, size_t Cols, IsNumber<T> = 0>
+inline Matrix<U, Rows, Cols> operator+(T number, const Matrix<U, Rows, Cols>& matrix) {
+    return matrix + number;
+}
 
 
 // This class contains functions that are used for
