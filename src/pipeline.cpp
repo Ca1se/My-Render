@@ -120,13 +120,13 @@ inline void prepareVertex(const std::array<int, 3>& tri_index, Payload& payload,
 void Pipeline::renderingModel(const Model& model, Shader shader) {
     int face_num = model.faces.size();
     std::vector<std::thread> threads;
-    for(int i = 0; i < 6; i++) {
-        threads.emplace_back(&Pipeline::renderingTriangles, this, i, face_num, 7, model, shader);
+    for(int i = 0; i < 9; i++) {
+        threads.emplace_back(&Pipeline::renderingTriangles, this, i, face_num, 10, model, shader);
     }
     
-    renderingTriangles(6, face_num, 7, model, shader);
+    renderingTriangles(9, face_num, 10, model, shader);
 
-    for(int i = 0; i < 6; i++) {
+    for(int i = 0; i < 9; i++) {
         threads[i].join();
     }
 }
@@ -171,6 +171,7 @@ void Pipeline::rasterize(const Payload& payload, const Shader& shader) {
         screen_pos[i].y() = 0.5 * (height - 1) * (payload.homo_coords[i].y() / payload.homo_coords[i].w() + 1);
         screen_pos[i].z() = -payload.homo_coords[i].w();
     }
+    
 
     int x_max = 0;
     int x_min = width;
@@ -194,21 +195,16 @@ void Pipeline::rasterize(const Payload& payload, const Shader& shader) {
                 int index = y * width + x;
                 float corrector = 1 / (alpha / payload.homo_coords[0].w() + beta / payload.homo_coords[1].w() + gamma / payload.homo_coords[2].w());
                 float z = -corrector;
-                mux.lock();
+
                 if(zbuffer[index] > z) {
                     zbuffer[index] = z;
-                    mux.unlock();
                     Vector3f color = shader.fragmentShader(alpha, beta, gamma, corrector);
                     for(int i = 0; i < 3; i++) {
                         color[i] = std::max(0.f, std::min(255.f, color[i]));
                     }
-                    mux.lock();
                     if(zbuffer[index] == z) {
                         setColor(x, y, color);
                     }
-                    mux.unlock();
-                }else {
-                    mux.unlock();
                 }
             }
         }
