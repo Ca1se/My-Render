@@ -4,9 +4,9 @@
 #include "matrix.hpp"
 
 struct Camera {
-    Vector3f position;
-    Vector3f gaze;
-    Vector3f view_up;
+    Vector3f target;
+    Vector3f view;
+    Vector3f up;
 };
 
 #endif

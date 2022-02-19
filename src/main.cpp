@@ -93,7 +93,7 @@ int main(int argc, char** argv) {
         return 0;
     }
 
-    Camera camera{ Vector3f{-40, 20, 20}, Vector3f{1, -1, -1}, Vector3f{0, 1, -1} };
+    Camera camera{ Vector3f{0, 0, 0}, Vector3f{10, 0, 0}, Vector3f{0, 1, 0} };
 
     Pipeline pipeline;
     pipeline.setRenderingSize(window_width, window_height);
@@ -111,10 +111,13 @@ int main(int argc, char** argv) {
     while(!window.isClosed()) {
         pipeline.clearBuffer();
 
+        window.handleEvent(camera);
         updateShader(shader, camera, perspective_matrix);
         for(int i = 0; i < models.size(); i++) {
-            shader.texture = textures[i];
-            pipeline.renderingModel(*models[i], shader);
+            if(models[i]) {
+                shader.texture = textures[i];
+                pipeline.renderingModel(*models[i], shader);
+            }
         }
         window.draw(pipeline.data(), 0, 0, window_width, window_height);
         

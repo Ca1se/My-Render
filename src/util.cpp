@@ -6,11 +6,10 @@
 #include "macro.hpp"
 
 Matrix4f calViewMatrix(const Camera& camera) {
-    Vector3f w = camera.gaze / -camera.gaze.norm();
-    Vector3f txw = camera.view_up.cross(w);
-    Vector3f u = txw / txw.norm();
-    Vector3f v = w.cross(u);
-    const Vector3f& e = camera.position;
+    Vector3f w = Vector3f{camera.view - camera.target}.normalized();
+    Vector3f u = camera.up.cross(w).normalized();
+    Vector3f v = camera.up.normalized();
+    const Vector3f& e = camera.view;
 
     return Matrix4f{
         u.x(), u.y(), u.z(), -u.x() * e.x() - u.y() * e.y() - u.z() * e.z(),
@@ -47,7 +46,7 @@ void setPhongInfo(Shader& shader) noexcept {
 }
 
 void updateShader(Shader& shader, const Camera& camera, const Matrix4f& perspective_matrix) noexcept {
-    shader.viewer_pos = camera.position;
+    shader.viewer_pos = camera.view;
     shader.mvp = perspective_matrix * calViewMatrix(camera);
 }
 
