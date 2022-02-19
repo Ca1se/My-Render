@@ -24,6 +24,10 @@ private:
     xcb_pixmap_t canvas_;
     xcb_image_t* image_;
 
+    int mouse_x_;
+    int mouse_y_;
+    bool mouse_pressed_;
+
     std::queue<xcb_generic_event_t*> waited_events_;
 
 public:
