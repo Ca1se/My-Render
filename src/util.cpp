@@ -59,3 +59,17 @@ void printWrongArg(const char* name, const char* arg) noexcept {
     printf("%s: wrong argument: %s\n", name, arg);
     printf("Try '%s --help' for more information\n", name);
 }
+
+Vector2f rotatePoint2D(const Vector2f& point, float angle, const Vector2f& origin) noexcept {
+    Vector2f p = point - origin;
+    float r = angle / 180 * PI;
+    
+    float cos_r = std::cos(r);
+    float sin_r = std::sin(r);
+    Matrix2f rotater = {
+        cos_r, -sin_r,
+        sin_r,  cos_r
+    };
+    p = rotater * p;
+    return p + origin;
+}

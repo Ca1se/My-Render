@@ -21,5 +21,6 @@ void setPhongInfo(Shader& shader) noexcept;
 void updateShader(Shader& shader, const Camera& camera, const Matrix4f& perspective_matrix) noexcept;
 void printMissArg(const char* name) noexcept;
 void printWrongArg(const char* name, const char* arg) noexcept;
+Vector2f rotatePoint2D(const Vector2f& point, float angle, const Vector2f& origin) noexcept;
 
 #endif
