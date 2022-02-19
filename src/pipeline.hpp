@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <cstring>
+#include <mutex>
 #include <limits>
 #include <vector>
 #include <array>
@@ -42,9 +43,10 @@ class Pipeline {
 private:
     size_t width;
     size_t height;
-    Payload payload;
     std::vector<float> zbuffer;
     std::vector<std::uint8_t> framebuffer;
+
+    std::mutex mux;
 
 public:
     void setRenderingSize(size_t width, size_t height) noexcept {
@@ -65,10 +67,8 @@ public:
     std::uint8_t* data() noexcept { return framebuffer.data(); }
 
 private:
-    void prepareVertex(const std::array<int, 3>& tri_index, Shader& shader) noexcept;
-    int homogeneous_clip();
-    int clipWithPlane(Plane clip_plane, int vertex_num);
-    void rasterize(Shader shader);
+    void rasterize(const Payload& payload, const Shader& shader);
+    void renderingTriangles(int begin, int end, int interval, const Model& model, Shader shader);
     void setColor(int x, int y, const Vector3f& color) noexcept;
 };
 

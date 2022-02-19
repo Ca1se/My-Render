@@ -24,8 +24,8 @@ struct Shader {
 
     std::shared_ptr<Texture> texture;
 
-    Vector4f vertexShader(const Vector3f& coords) noexcept;
-    Vector3f fragmentShader(float alpha, float beta, float gamma, float corrector) noexcept;
+    Vector4f vertexShader(const Vector3f& coords) const noexcept;
+    Vector3f fragmentShader(float alpha, float beta, float gamma, float corrector) const noexcept;
 };
 
 
