@@ -1,7 +1,4 @@
-#include <cassert>
-#include <chrono>
 #include <cstdio>
-#include <cstring>
 #include <cstdint>
 #include <ctime>
 #include <memory>
@@ -94,7 +91,7 @@ int main(int argc, char** argv) {
         return 0;
     }
 
-    Camera camera{ Vector3f{0, 1, 0}, Vector3f{0, 1, 5}, Vector3f{0, 1, 0} };
+    Camera camera{ Vector3f{0, 1, 0}, Vector3f{0, 1, 30}, Vector3f{0, 1, 0} };
 
     Pipeline pipeline;
     pipeline.setRenderingSize(window_width, window_height);
@@ -109,7 +106,6 @@ int main(int argc, char** argv) {
     window.display();
 
     std::uint32_t frame_count = 0;
-    using namespace std::chrono;
     time_t now, begin = time(nullptr);
     while(!window.isClosed()) {
         pipeline.clearBuffer();

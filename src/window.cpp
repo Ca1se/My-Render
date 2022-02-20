@@ -145,7 +145,7 @@ void Window::handleEvent(Camera& camera) noexcept {
                 }else if(ev->detail == 4) {
                     camera.view -= 0.01 * distance * z;
                 }else if(ev->detail == 5) {
-                    camera.view += 0.15f * z;
+                    camera.view += 0.35f * z;
                 }
                 
                 break;
