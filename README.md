@@ -24,5 +24,3 @@ I have prepared some model in dir example.
 # Reference
 [SunXLei](https://github.com/SunXLei):  [计算机图形学系列笔记](https://www.zhihu.com/column/c_1249465121615204352), [SRender](https://github.com/SunXLei/SRender)  
 [闫令琪](https://sites.cs.ucsb.edu/~lingqi/index.html): [GAMES101](https://sites.cs.ucsb.edu/~lingqi/teaching/games101.html)
-
-[picture2]:
