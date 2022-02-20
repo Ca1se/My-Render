@@ -52,7 +52,8 @@ Window::Window(int width, int height):
 }
 
 Window::~Window() {
-    xcb_image_destroy(image_);
+    if(image_)
+        xcb_image_destroy(image_);
     xcb_free_pixmap(connection_, canvas_);
     xcb_disconnect(connection_);
     while(!waited_events_.empty()) {
