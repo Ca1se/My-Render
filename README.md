@@ -1,9 +1,9 @@
 # My-Render
 This is a simple software rasterization written by C++17, It simulates the entire process when gpu renders a model.
 
-# Pictrue
 ### Blinn-Phong
-
+![picture1](https://github.com/Ca1se/My-Render/blob/master/picture/picture1.png)  
+![picture2](https://github.com/Ca1se/My-Render/blob/master/picture/picture2.png)
 # Build
 This project runs on linux, make sure that you have cmake and these libraries to build this project: z-lib, xcb, xcb-image.
 ```
