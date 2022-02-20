@@ -8,7 +8,7 @@
 Matrix4f calViewMatrix(const Camera& camera) {
     Vector3f w = Vector3f{camera.view - camera.target}.normalized();
     Vector3f u = camera.up.cross(w).normalized();
-    Vector3f v = camera.up.normalized();
+    Vector3f v = w.cross(u).normalized();
     const Vector3f& e = camera.view;
 
     return Matrix4f{

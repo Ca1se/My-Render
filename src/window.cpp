@@ -7,6 +7,7 @@
 #include <xcb/xcb_image.h>
 #include <xcb/xproto.h>
 #include "util.hpp"
+#include "macro.hpp"
 #include "window.hpp"
 
 
@@ -97,7 +98,7 @@ void Window::display() noexcept {
 void Window::handleEvent(Camera& camera) noexcept {
     Vector3f z = Vector3f{camera.view - camera.target}.normalized();
     Vector3f x = camera.up.cross(z).normalized();
-    Vector3f y = camera.up.normalized();
+    Vector3f y = z.cross(x).normalized();
 
     float distance = Vector3f{camera.target - camera.view}.norm();
 
@@ -142,7 +143,7 @@ void Window::handleEvent(Camera& camera) noexcept {
                     mouse_x_ = ev->event_x;
                     mouse_y_ = ev->event_y;
                 }else if(ev->detail == 4) {
-                    camera.view -= 10.0 / width_ * distance * z;
+                    camera.view -= 0.01 * distance * z;
                 }else if(ev->detail == 5) {
                     camera.view += 0.15f * z;
                 }
@@ -164,7 +165,31 @@ void Window::handleEvent(Camera& camera) noexcept {
                     int y_offset = ev->event_y - mouse_y_;
                     mouse_x_ = ev->event_x;
                     mouse_y_ = ev->event_y;
+                    x_offset = -x_offset;
+                    y_offset = -y_offset;
 
+                    // reference from SunXLei: https://github.com/SunXLei/SRender/blob/master/core/camera.cpp
+                    Vector3f from_target = camera.view - camera.target;
+                    float radius = distance;
+
+                    float phi     = (float) atan2(from_target.x(), from_target.z());
+                    float theta   = (float) acos(from_target.y() / radius);
+                    float x_delta = (float) x_offset / width_;
+                    float y_delta = (float) y_offset / height_;
+
+                    float factor = 1.5 * PI;
+
+                    phi   += x_delta * factor;
+                    theta += y_delta * factor;
+
+                    if(theta > PI) theta = PI - MINIMAL_VAL * 100;
+                    if(theta < 0)  theta = MINIMAL_VAL * 100;
+
+                    camera.view.x() = camera.target.x() + radius * sin(phi) * sin(theta);
+                    camera.view.y() = camera.target.y() + radius * cos(theta);
+                    camera.view.z() = camera.target.z() + radius * sin(theta) * cos(phi);
+
+                    /*
                     Matrix3f viewspace{
                         x.x(), y.x(), z.x(),
                         x.y(), y.y(), z.y(),
@@ -180,7 +205,6 @@ void Window::handleEvent(Camera& camera) noexcept {
 
                     camera.view = viewspace.transpose() * vs_view + camera.view;
 
-                    /*
                     Vector3f new_z = Vector3f{ camera.view - camera.target }.normalized();
                     Vector3f new_x = y.cross(new_z).normalized();
                     Vector3f new_y = new_z.cross(new_x).normalized();
@@ -199,25 +223,8 @@ void Window::handleEvent(Camera& camera) noexcept {
                     new_vs_view.y() = zy.y();
 
                     camera.view = new_viewspace.transpose() * new_vs_view + camera.view;
-                    Vector3f final_z = Vector3f{ camera.view - camera.target }.normalized();
-                    camera.up = final_z.cross(new_x).normalized();
                     */
 
-                    /*
-                    Vector3f new_z = Vector3f{ vs_view - vs_target }.normalized();
-                    Vector3f new_x = y.cross(new_z);
-                    
-
-                    
-
-                    
-
-                    Vector3f final_z = Vector3f{ new_vs_view - new_vs_target }.normalized();
-                    // camera.up = new_x.cross(final_z);
-                    
-                    Vector3f tmp = new_viewspace.transpose() * new_vs_view + vs_view;
-                    camera.view = viewspace.transpose() * tmp + camera.view;
-                    */
                 }
 
                 break;
