@@ -3,8 +3,8 @@ This is a simple software rasterization written by C++17, It simulates the entir
 
 # Pictrue
 ### Blinn-Phong
-![avatar][picture1]
-![avatar][picture2]
+![avatar][picture1]  
+![avatar][picture2]  
 # Build
 This project runs on linux, make sure that you have cmake and these libraries to build this project: z-lib, xcb, xcb-image.
 ```
