@@ -94,7 +94,7 @@ int main(int argc, char** argv) {
         return 0;
     }
 
-    Camera camera{ Vector3f{0, 0, 0}, Vector3f{10, 0, 0}, Vector3f{0, 1, 0} };
+    Camera camera{ Vector3f{0, 1, 0}, Vector3f{0, 1, 5}, Vector3f{0, 1, 0} };
 
     Pipeline pipeline;
     pipeline.setRenderingSize(window_width, window_height);
