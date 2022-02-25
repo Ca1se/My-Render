@@ -117,8 +117,14 @@ inline void prepareVertex(const std::array<int, 3>& tri_index, Payload& payload,
     }
 }
 
+Pipeline::Pipeline(int width, int height):
+        width(width), height(height),
+        zbuffer(width * height),
+        framebuffer(4 * width * height) {}
+
 void Pipeline::renderingModel(const Model& model, Shader shader) {
     int face_num = model.faces.size();
+    /*
     std::vector<std::thread> threads;
     for(int i = 0; i < 9; i++) {
         threads.emplace_back(&Pipeline::renderingTriangles, this, i, face_num, 10, model, shader);
@@ -129,6 +135,8 @@ void Pipeline::renderingModel(const Model& model, Shader shader) {
     for(int i = 0; i < 9; i++) {
         threads[i].join();
     }
+    */
+    renderingTriangles(0, face_num, 1, model, shader);
 }
 
 void Pipeline::renderingTriangles(int begin, int end, int interval, const Model& model, Shader shader) {
@@ -202,9 +210,7 @@ void Pipeline::rasterize(const Payload& payload, const Shader& shader) {
                     for(int i = 0; i < 3; i++) {
                         color[i] = std::max(0.f, std::min(255.f, color[i]));
                     }
-                    if(zbuffer[index] == z) {
-                        setColor(x, y, color);
-                    }
+                    setColor(x, y, color);
                 }
             }
         }
