@@ -93,8 +93,7 @@ int main(int argc, char** argv) {
 
     Camera camera{ Vector3f{0, 1, 0}, Vector3f{0, 1, 30}, Vector3f{0, 1, 0} };
 
-    Pipeline pipeline;
-    pipeline.setRenderingSize(window_width, window_height);
+    Pipeline pipeline(window_width, window_height);
 
     Shader shader;
     setPhongInfo(shader);
@@ -127,7 +126,6 @@ int main(int argc, char** argv) {
         }
         frame_count++;
     }
-    
 
     return 0;
 }

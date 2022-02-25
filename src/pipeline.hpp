@@ -46,16 +46,10 @@ private:
     std::vector<float> zbuffer;
     std::vector<std::uint8_t> framebuffer;
 
-    std::mutex mux;
+public:
+    Pipeline(int width = 800, int height = 600);
 
 public:
-    void setRenderingSize(size_t width, size_t height) noexcept {
-        this->width = width;
-        this->height = height;
-        zbuffer.resize(width * height);
-        framebuffer.resize(width * height * 4);
-    }
-
     void clearBuffer() noexcept {
         std::fill(zbuffer.begin(), zbuffer.end(), std::numeric_limits<float>::infinity());
         for(std::uint32_t i = 0; i < framebuffer.size(); i += 4) {

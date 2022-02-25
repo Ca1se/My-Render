@@ -15,7 +15,6 @@ inline Vector<T, Size> vectorInterpolate(const Vector<T, Size>& start,
     return start + (end - start) * t;
 }
 
-int getIndex(int x, int y, int width, int height) noexcept;
 Vector4f toVector4f(const Vector3f& vec3, float w) noexcept;
 void setPhongInfo(Shader& shader) noexcept;
 void updateShader(Shader& shader, const Camera& camera, const Matrix4f& perspective_matrix) noexcept;
