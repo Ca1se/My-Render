@@ -18,6 +18,7 @@
 #include <type_traits>
 #include <utility>
 
+
 inline constexpr bool equalValue(size_t t1, size_t t2) {
     return (t1 == t2);
 }
