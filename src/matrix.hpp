@@ -1,9 +1,8 @@
 // Author: Wu Zihao                 
 // Github: https://github.com/Ca1se 
 //
-// This is a matrix library containing both 
-// matrix and vector parts. This library is used for 
-// calculations for my computer graphics practice project.
+// This is a matrix library containing both matrix and vector parts.
+// This library is used for calculations for my computer graphics practice project.
 // This library require C++17
 
 #ifndef _MATRIX_HPP_
@@ -19,14 +18,14 @@
 #include <type_traits>
 #include <utility>
 
-inline constexpr bool eq(size_t t1, size_t t2) {
+inline constexpr bool equalValue(size_t t1, size_t t2) {
     return (t1 == t2);
 }
 
 // Class Matrix (and Vector) only accept types
 // that can be used for arithmetic.
 template <typename T, size_t Rows, size_t Cols,
-        bool = eq(Rows, Cols),
+        bool = equalValue(Rows, Cols),
         bool = std::is_arithmetic<T>::value>
 class Matrix;
 
