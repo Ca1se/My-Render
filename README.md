@@ -16,7 +16,7 @@ make -j4
 ```
 # Usage
 To use this render, you need prepare obj format model and corresponding png format texture.  
-I have prepared some model in dir example.
+I have prepared some model in directory named example.
 ```
 ./render --model ../example/cottage/cottage.obj --texture ../example/cottage/cottage_diffuse.png
 ```
