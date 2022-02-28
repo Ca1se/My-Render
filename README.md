@@ -12,6 +12,7 @@ cd My-Render
 mkdir build
 cd build
 cmake -DCMAKE_BUILD_TYPE=Release ..
+make -j4
 ```
 # Usage
 To use this render, you need prepare obj format model and corresponding png format texture.  
