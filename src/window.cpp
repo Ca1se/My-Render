@@ -126,11 +126,11 @@ void Window::handleEvent(Camera& camera) noexcept {
                     camera.view += tx;
                     camera.target += tx;
                 }else if(ev->detail == 24) {
-                    Vector3f ty = 0.15f * y;
+                    Vector3f ty = 0.45f * y;
                     camera.view += ty;
                     camera.target += ty;
                 }else if(ev->detail == 26) {
-                    Vector3f ty = 0.15f * y;
+                    Vector3f ty = 0.45f * y;
                     camera.view -= ty;
                     camera.target -= ty;
                 }
