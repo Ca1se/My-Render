@@ -77,7 +77,7 @@ int main(int argc, char** argv) {
             auto m = loader.loadModel(argv[i]);
             models.push_back(m);
         }else if(texture) {
-            if(!strcmp(argv[i], "null")) {
+            if(!strcmp(argv[i], "none")) {
                 textures.push_back(std::shared_ptr<Texture>{});
             }else {
                 auto t = loader.loadTexture(argv[i]);
@@ -98,7 +98,7 @@ int main(int argc, char** argv) {
     Shader shader;
     setPhongInfo(shader);
 
-    Matrix4f perspective_matrix = calPerspectiveMatrix(60, float(window_width) / window_height, -0.1, -10000);
+    Matrix4f perspective_matrix = calProjectionMatrix(60, float(window_width) / window_height, -0.1, -10000);
     Matrix4f view_matrix = calViewMatrix(camera);
 
     Window window(window_width, window_height);

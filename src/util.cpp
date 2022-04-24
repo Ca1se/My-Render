@@ -19,17 +19,28 @@ Matrix4f calViewMatrix(const Camera& camera) {
     };
 }
 
-Matrix4f calPerspectiveMatrix(float fov, float aspect, float near, float far) {
+Matrix4f calProjectionMatrix(float fov, float aspect, float near, float far) {
     float r = fov / 2 / 180 * PI;
     float top = -tan(r) * near;
     float right = top * aspect;
 
+    // perspective
     return Matrix4f{
         near / right, 0, 0, 0,
         0, near / top, 0, 0,
         0, 0, (near + far) / (near - far), -2 * near * far / (near - far),
         0, 0, 1, 0
     };
+
+    /*
+    // orthographic
+    return Matrix4f {
+        -1 / right, 0, 0, 0,
+        0, -1 / top, 0, 0,
+        0, 0, 2 / (near - far), (near + far) / (far - near),
+        0, 0, 1, 0
+    };
+    */
 }
 
 Vector4f toVector4f(const Vector3f& vec3, float w) noexcept {
