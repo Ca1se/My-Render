@@ -7,7 +7,7 @@
 #include "phong_shader.hpp"
 
 Matrix4f calViewMatrix(const Camera& camera);
-Matrix4f calPerspectiveMatrix(float fov, float aspect, float near, float far);
+Matrix4f calProjectionMatrix(float fov, float aspect, float near, float far);
 
 template <typename T, size_t Size>
 inline Vector<T, Size> vectorInterpolate(const Vector<T, Size>& start, 
