@@ -67,11 +67,13 @@ public:
 public:
     constexpr size_t size() const noexcept { return size_; }
 
-    constexpr T* data() const noexcept { return data_; }
-
     constexpr size_t rows() const noexcept { return Rows; }
 
     constexpr size_t cols() const noexcept { return Cols; }
+
+    constexpr T* data() noexcept { return data_; }
+
+    constexpr const T* data() const noexcept { return data_; }
 
     T* begin() noexcept { return data_; }
 

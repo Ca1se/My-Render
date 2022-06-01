@@ -7,6 +7,7 @@
 #include <limits>
 #include <vector>
 #include <array>
+#include <omp.h>
 #include "matrix.hpp"
 #include "model.hpp"
 #include "macro.hpp"
@@ -45,9 +46,11 @@ private:
     size_t height;
     std::vector<float> zbuffer;
     std::vector<std::uint8_t> framebuffer;
+    std::vector<omp_lock_t> locks;
 
 public:
     Pipeline(int width = 800, int height = 600);
+    ~Pipeline();
 
 public:
     void clearBuffer() noexcept {

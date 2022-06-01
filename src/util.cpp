@@ -52,7 +52,7 @@ void setPhongInfo(Shader& shader) noexcept {
     shader.kd = { 0.25, 0.25, 0.25 };
     shader.ks = { 0.7, 0.7, 0.7 };
 
-    shader.light_pos = {-30, 30, 30 };
+    shader.light_pos = { 0, 30, -30 };
     shader.light_intensity = { 1, 1, 1 };
 }
 

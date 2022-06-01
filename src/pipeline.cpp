@@ -1,9 +1,11 @@
 #include <array>
+#include <clocale>
 #include <cmath>
 #include <iostream>
 #include <thread>
 #include <tuple>
 #include <vector>
+#include <omp.h>
 #include "pipeline.hpp"
 #include "macro.hpp"
 #include "model.hpp"
@@ -120,23 +122,27 @@ inline void prepareVertex(const std::array<int, 3>& tri_index, Payload& payload,
 Pipeline::Pipeline(int width, int height):
         width(width), height(height),
         zbuffer(width * height),
-        framebuffer(4 * width * height) {}
+        framebuffer(4 * width * height),
+        locks(width * height) {
+
+    for(omp_lock_t& lock: locks) {
+        omp_init_lock(&lock);
+    }
+}
+
+Pipeline::~Pipeline() {
+    for(omp_lock_t& lock: locks) {
+        omp_destroy_lock(&lock);
+    }
+}
 
 void Pipeline::renderingModel(const Model& model, Shader shader) {
     int face_num = model.faces.size();
-    /*
-    std::vector<std::thread> threads;
-    for(int i = 0; i < 9; i++) {
-        threads.emplace_back(&Pipeline::renderingTriangles, this, i, face_num, 10, model, shader);
-    }
     
-    renderingTriangles(9, face_num, 10, model, shader);
-
-    for(int i = 0; i < 9; i++) {
-        threads[i].join();
+#pragma omp parallel for num_threads(10)
+    for(int i = 0; i < 10; i++) {
+        renderingTriangles(i, face_num, 10, model, shader);
     }
-    */
-    renderingTriangles(0, face_num, 1, model, shader);
 }
 
 void Pipeline::renderingTriangles(int begin, int end, int interval, const Model& model, Shader shader) {
@@ -201,17 +207,23 @@ void Pipeline::rasterize(const Payload& payload, const Shader& shader) {
             auto [alpha, beta, gamma] = computeBarycentricCoords2D((float) (x + 0.5), (float) (y + 0.5), screen_pos);
             if(inside_triangle(alpha, beta, gamma)) {
                 int index = y * width + x;
+                omp_lock_t* now_lock = &locks[index];
                 float corrector = 1 / (alpha / payload.homo_coords[0].w() + beta / payload.homo_coords[1].w() + gamma / payload.homo_coords[2].w());
                 float z = -corrector;
 
+                omp_set_lock(now_lock);
                 if(zbuffer[index] > z) {
                     zbuffer[index] = z;
+                    omp_unset_lock(now_lock);
                     Vector3f color = shader.fragmentShader(alpha, beta, gamma, corrector);
                     for(int i = 0; i < 3; i++) {
                         color[i] = std::max(0.f, std::min(255.f, color[i]));
                     }
-                    setColor(x, y, color);
+                    omp_set_lock(now_lock);
+                    if(zbuffer[index] == z)
+                        setColor(x, y, color);
                 }
+                omp_unset_lock(now_lock);
             }
         }
     }

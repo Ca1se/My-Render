@@ -99,7 +99,6 @@ int main(int argc, char** argv) {
     setPhongInfo(shader);
 
     Matrix4f perspective_matrix = calProjectionMatrix(60, float(window_width) / window_height, -0.1, -10000);
-    Matrix4f view_matrix = calViewMatrix(camera);
 
     Window window(window_width, window_height);
     window.display();
