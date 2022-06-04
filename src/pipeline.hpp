@@ -13,6 +13,7 @@
 #include "macro.hpp"
 #include "phong_shader.hpp"
 
+
 enum Plane {
     MINIMAL,
     RIGHT,

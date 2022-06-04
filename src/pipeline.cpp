@@ -139,10 +139,16 @@ Pipeline::~Pipeline() {
 void Pipeline::renderingModel(const Model& model, Shader shader) {
     int face_num = model.faces.size();
     
-#pragma omp parallel for num_threads(10)
-    for(int i = 0; i < 10; i++) {
-        renderingTriangles(i, face_num, 10, model, shader);
+#ifdef MULTI_THREAD
+
+#pragma omp parallel for num_threads(THREAD_NUM)
+    for(int i = 0; i < THREAD_NUM; i++) {
+        renderingTriangles(i, face_num, THREAD_NUM, model, shader);
     }
+
+#else
+    renderingTriangles(0, face_num, 1, model, shader);
+#endif
 }
 
 void Pipeline::renderingTriangles(int begin, int end, int interval, const Model& model, Shader shader) {
@@ -211,6 +217,7 @@ void Pipeline::rasterize(const Payload& payload, const Shader& shader) {
                 float corrector = 1 / (alpha / payload.homo_coords[0].w() + beta / payload.homo_coords[1].w() + gamma / payload.homo_coords[2].w());
                 float z = -corrector;
 
+#ifdef MULTI_THREAD
                 omp_set_lock(now_lock);
                 if(zbuffer[index] > z) {
                     zbuffer[index] = z;
@@ -224,6 +231,16 @@ void Pipeline::rasterize(const Payload& payload, const Shader& shader) {
                         setColor(x, y, color);
                 }
                 omp_unset_lock(now_lock);
+#else
+                if(zbuffer[index] > z) {
+                    zbuffer[index] = z;
+                    Vector3f color = shader.fragmentShader(alpha, beta, gamma, corrector);
+                    for(int i = 0; i < 3; i++) {
+                        color[i] = std::max(0.f, std::min(255.f, color[i]));
+                    }
+                    setColor(x, y, color);
+                }
+#endif
             }
         }
     }
