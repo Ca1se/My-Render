@@ -8,11 +8,11 @@
 #include "png_image.hpp"
 
 
-static const std::uint64_t kPngSign = 0x89504e470d0a1a0a;
+static constexpr std::uint64_t kPngSign = 0x89504e470d0a1a0a;
 
 // most of computer cpu use little endian, 
 // PNG file use big endian, so we need reverse endianness
-inline constexpr std::uint64_t reverseEndian(std::uint64_t val) {
+constexpr inline std::uint64_t reverseEndian(std::uint64_t val) {
     const std::uint64_t fmt1 = 0x00ff00ff00ff00ff;
     const std::uint64_t fmt2 = 0x0000ffff0000ffff;
     const std::uint64_t fmt3 = 0x00000000ffffffff;
@@ -23,7 +23,7 @@ inline constexpr std::uint64_t reverseEndian(std::uint64_t val) {
     return val;
 }
 
-inline constexpr std::uint32_t reverseEndian(std::uint32_t val) {
+constexpr inline std::uint32_t reverseEndian(std::uint32_t val) {
     const std::uint32_t fmt1 = 0x00ff00ff;
     const std::uint32_t fmt2 = 0x0000ffff;
 
@@ -48,7 +48,7 @@ PNGImage::PNGImage(const PNGImage& image):
     memcpy(data_.get(), image.data_.get(), sizeof(std::uint8_t) * image.size());
 }
 
-inline std::uint8_t paethPredictor(std::uint8_t a, std::uint8_t b, std::uint8_t c) {
+constexpr inline std::uint8_t paethPredictor(std::uint8_t a, std::uint8_t b, std::uint8_t c) {
     int base = a + b - c;
     int pa = abs(base - (int) a);
     int pb = abs(base - (int) b);
@@ -236,8 +236,8 @@ bool PNGImage::generatePNG(const std::string& png_file_name) {
     file.write((char*) &crc, 4);
 
     // IEND
-    std::uint8_t iend[12] = {0x00, 0x00, 0x00, 0x00, 0x49, 0x45, 0x4E, 0x44, 0xAE, 0x42, 0x60, 0x82};
-    file.write((char*) iend, 12);
+    const std::uint8_t iend[12] = {0x00, 0x00, 0x00, 0x00, 0x49, 0x45, 0x4E, 0x44, 0xAE, 0x42, 0x60, 0x82};
+    file.write((const char*) iend, 12);
     file.close();
 
     return true;

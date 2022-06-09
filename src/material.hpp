@@ -26,10 +26,5 @@ public:
 
 };
 
-enum IllumMode {
-    COLOR_ONLY = 0,
-    DIFFUSE,
-    PHONG
-};
 
 #endif // _MATERIAL_HPP_

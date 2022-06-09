@@ -5,6 +5,7 @@
 #include <vector>
 #include <string>
 #include "camera.hpp"
+#include "material.hpp"
 #include "matrix.hpp"
 #include "model.hpp"
 #include "phong_shader.hpp"
@@ -27,8 +28,8 @@ int main(int argc, char** argv) {
         return 0;
     }
 
-    int window_width = 800;
-    int window_height = 600;
+    int window_width = 1080;
+    int window_height = 540;
     bool model = false;
     bool texture = false;
     ObjLoader loader;
@@ -91,7 +92,7 @@ int main(int argc, char** argv) {
         return 0;
     }
 
-    Camera camera{ Vector3f{0, 1, 0}, Vector3f{0, 1, 30}, Vector3f{0, 1, 0} };
+    Camera camera{ Vector3f{0.145243, 1.88633, -0.901848}, Vector3f{-15.9753, -1.11993, -6.45258}, Vector3f{0, 1, 0} };
 
     Pipeline pipeline(window_width, window_height);
 
@@ -110,6 +111,9 @@ int main(int argc, char** argv) {
 
         window.handleEvent(camera);
         updateShader(shader, camera, perspective_matrix);
+
+
+
         for(int i = 0; i < models.size(); i++) {
             if(models[i]) {
                 shader.texture = textures[i];
