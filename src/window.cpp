@@ -235,18 +235,21 @@ void Window::handleEvent(Camera& camera) noexcept {
     }
 }
 
-void Window::draw(const std::uint8_t* data, int x, int y, int width, int height) const noexcept {
+void Window::draw(std::uint8_t* data, int x, int y, int width, int height) const noexcept {
     if(x >= width_ || y >= height_)
         return;
 
     width -= std::max(0, x + width - width_);
     height -= std::max(0, y + height - height_);
 
+    /*
     int cur = 4 * (width_ * y + x);
     for(std::uint32_t i = 0, dp; i < 4 * width * height; i += 4, cur += 4) {
         dp = *(std::uint32_t*) (data + cur);
         *(std::uint32_t*) (image_->data + cur) = (dp & 0xff00ff00 | ((dp >> 16) & 0xFF) | ((dp << 16) & 0xFF0000));
     }
+    */
+    image_->data = data;
     xcb_image_put(connection_, canvas_, gcontext_, image_, 0, 0, 0);
     xcb_copy_area(connection_, canvas_, window_, gcontext_, x, y, x, y, width, height);
     xcb_flush(connection_);

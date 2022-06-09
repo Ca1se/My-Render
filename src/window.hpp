@@ -39,7 +39,7 @@ public:
 
     void handleEvent(Camera& camera) noexcept;
 
-    void draw(const std::uint8_t* data, int x, int y, int width, int height) const noexcept;
+    void draw(std::uint8_t* data, int x, int y, int width, int height) const noexcept;
 
     bool isClosed() const noexcept {
         return closed_;

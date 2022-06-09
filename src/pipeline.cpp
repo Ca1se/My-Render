@@ -249,7 +249,7 @@ void Pipeline::rasterize(const Payload& payload, const Shader& shader) {
 void Pipeline::setColor(int x, int y, const Vector3f& color) noexcept {
     int index = ((height - y - 1) * width + x) * 4;
 
-    framebuffer[index]     = color[0];
+    framebuffer[index + 2] = color[0];
     framebuffer[index + 1] = color[1];
-    framebuffer[index + 2] = color[2];
+    framebuffer[index]     = color[2];
 }
