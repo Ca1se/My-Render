@@ -11,6 +11,9 @@
 #include <cstdint>
 #include <memory>
 #include <string>
+#include <tuple>
+#include <vector>
+
 
 enum PNGDataBlockType {
     IHDR = (int('I') << 24) | (int('H') << 16) | (int('D') << 8) | int('R'),
@@ -37,67 +40,53 @@ struct PNGImageHeader {
     std::uint8_t interlace_method;
 };
 
-struct PNGColor {
-    std::uint8_t rgba[4];
-
-    PNGColor() = default;
-    PNGColor(std::uint8_t r, std::uint8_t g, std::uint8_t b, std::uint8_t a = 0xff): 
-            rgba{r, g, b, a} {}
-
-    std::uint8_t& operator[] (size_t index) noexcept {
-        return rgba[index];
-    }
-
-    const uint8_t& operator[] (size_t index) const noexcept {
-        return rgba[index];
-    }
-};
-
 class PNGImage {
 private:
-    PNGImageHeader header_;
-    std::shared_ptr<uint8_t[]> data_;
+    PNGImageHeader m_header;
+    // std::shared_ptr<uint8_t[]> data_;
+    std::vector<std::uint8_t> m_data;
 
 public:
-    PNGImage();
-    PNGImage(const PNGImage& image);
+    bool load(const std::string& png_file_name);
+    bool save(const std::string& png_file_name);
 
-public:
-    bool readPNG(const std::string& png_file_name);
-    bool generatePNG(const std::string& png_file_name);
-
-    size_t width() const noexcept { return header_.width; }
-    size_t height() const noexcept { return header_.height; }
+    size_t width() const noexcept { return m_header.width; }
+    size_t height() const noexcept { return m_header.height; }
 
     // when the png image has no alpha, it will be: r g b r g b r g b ...
     // when the png image has alpha, it will be: r g b a r g b a ...
-    std::uint8_t* data() const noexcept { return data_.get(); }
-    std::shared_ptr<std::uint8_t[]> sharedData() const noexcept { return data_; }
+    std::uint8_t* data() noexcept { return m_data.data(); }
 
-    size_t size() const noexcept { return header_.width * header_.height; }
+    const std::uint8_t* data() const noexcept { return m_data.data(); }
 
-    PNGColor getColor(int x, int y) const noexcept {
+    size_t size() const noexcept { return (m_header.width * m_header.height); }
+
+    std::tuple<std::uint8_t, std::uint8_t, std::uint8_t, std::uint8_t>
+    getColor(int x, int y) const noexcept {
         if(hasAlpha()) {
             int index = (y * width() + x) * 4;
-            return PNGColor(
-                data_[index], 
-                data_[index + 1], 
-                data_[index + 2], 
-                data_[index + 3]
+            return std::make_tuple(
+                m_data[index],
+                m_data[index + 1],
+                m_data[index + 2],
+                m_data[index + 3]
             );
         }
 
         int index = (y * width() + x) * 3;
-        return PNGColor(
-            data_[index],
-            data_[index + 1],
-            data_[index + 2]
+        return std::make_tuple(
+            m_data[index],
+            m_data[index + 1],
+            m_data[index + 2],
+            (std::uint8_t) 0xff
         );
     }
 
-    bool hasAlpha() const noexcept { return (header_.color_type == 6); }
+    bool hasAlpha() const noexcept { return (m_header.color_type == 6); }
 
-    PNGImageHeader& header() noexcept { return header_; }
+    PNGImageHeader& header() noexcept { return m_header; }
+
+    const PNGImageHeader& header() const noexcept { return m_header; }
 };
 
 #endif // _PNG_IMAGE_HPP_

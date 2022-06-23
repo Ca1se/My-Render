@@ -5,14 +5,14 @@
 #include "png_image.hpp"
 
 
-Texture::Texture(): image_(nullptr) {}
+Texture::Texture(): m_image(nullptr) {}
 
 bool Texture::loadTexture(const std::string& texture_file_name) {
     std::shared_ptr<PNGImage> image(new PNGImage());
 
-    if(bool res = image->readPNG(texture_file_name); !res)
+    if(bool res = image->load(texture_file_name); !res)
         return false;
 
-    image_.swap(image);
+    m_image.swap(image);
     return true;
 }

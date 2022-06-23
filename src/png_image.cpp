@@ -33,19 +33,11 @@ constexpr inline std::uint32_t reverseEndian(std::uint32_t val) {
 }
 
 inline std::uint32_t calCRC32(PNGDataBlockType type, const std::uint8_t* data, size_t length) {
-    std::unique_ptr<std::uint8_t[]> buf(new std::uint8_t[4 + length]);
+    std::vector<std::uint8_t> buf(4 + length);
     std::uint32_t type_val = reverseEndian((std::uint32_t) type);
-    memcpy(buf.get(), (const char*) &type_val, 4);
-    memcpy(buf.get() + 4, data, length);
-    return crc32(0, buf.get(), 4 + length);
-}
-
-PNGImage::PNGImage(): header_(), data_() {}
-
-PNGImage::PNGImage(const PNGImage& image): 
-        header_(image.header_), 
-        data_(new std::uint8_t[sizeof(std::uint8_t) * image.size()]) {
-    memcpy(data_.get(), image.data_.get(), image.size());
+    memcpy(buf.data(), (const char*) &type_val, 4);
+    memcpy(buf.data() + 4, data, length);
+    return crc32(0, buf.data(), 4 + length);
 }
 
 constexpr inline std::uint8_t paethPredictor(std::uint8_t a, std::uint8_t b, std::uint8_t c) {
@@ -58,12 +50,11 @@ constexpr inline std::uint8_t paethPredictor(std::uint8_t a, std::uint8_t b, std
     else return c;
 }
 
-bool PNGImage::readPNG(const std::string& png_file_name) {
+bool PNGImage::load(const std::string& png_file_name) {
     std::ifstream file(png_file_name, std::ios::in | std::ios::binary);
-
-    std::unique_ptr<std::uint8_t[]> compressed_data;
+    std::vector<std::uint8_t> compressed_data;
     std::uint32_t data_index = 0;
-
+    
     if(!file.is_open()) 
         goto failed;
 
@@ -83,51 +74,51 @@ bool PNGImage::readPNG(const std::string& png_file_name) {
         block_type = reverseEndian(block_type);
         
         if(block_type == IEND) {
-            std::uint32_t bpp = (header_.color_type == TRUE_COLOR ? 3 : 4);
-            std::uint32_t data_width = header_.width * bpp;
-            std::uint32_t data_height = header_.height;
+            std::uint32_t bpp = (m_header.color_type == TRUE_COLOR ? 3 : 4);
+            std::uint32_t data_width = m_header.width * bpp;
+            std::uint32_t data_height = m_header.height;
             uLongf len = (data_width + 1) * data_height;
-            std::shared_ptr<std::uint8_t[]> filtered_data(new std::uint8_t[len]);
+            std::vector<std::uint8_t> filtered_data(len);
             
             std::uint32_t loop_count = 0;
             do {
-                std::uint32_t res = uncompress(filtered_data.get(), &len, compressed_data.get(), data_index);
+                std::uint32_t res = uncompress(filtered_data.data(), &len, compressed_data.data(), data_index);
                 if(res == Z_OK) {
-                    data_.reset(new std::uint8_t[data_width * data_height]);
+                    m_data.resize(data_width * data_height);
                     for(std::uint32_t i = 0; i < data_height; i++) {
                         std::uint32_t data_begin = i * data_width;
                         std::uint32_t filter_begin = i * (data_width + 1);
-                        memcpy(data_.get() + data_begin, filtered_data.get() + filter_begin + 1, data_width);
+                        memcpy(m_data.data() + data_begin, filtered_data.data() + filter_begin + 1, data_width);
                         switch(filtered_data[filter_begin]) {
                             case 0x00:
                                 break;
                             case 0x01: {
                                 for(std::uint32_t k = data_begin + bpp; k < data_begin + data_width; k++)
-                                    data_[k] = data_[k] + data_[k - bpp];
+                                    m_data[k] = m_data[k] + m_data[k - bpp];
                                 break;
                             }
                             case 0x02: {
                                 if(i == 0) goto failed;
                                 for(std::uint32_t k = data_begin; k < data_begin + data_width; k++)
-                                    data_[k] = data_[k] + data_[k - data_width];
+                                    m_data[k] = m_data[k] + m_data[k - data_width];
                                 break;
                             }
                             case 0x03: {
                                 if(i == 0) goto failed;
                                 for(std::uint32_t k = data_begin; k < data_begin + bpp; k++) {
-                                    data_[k] = data_[k] + data_[k - data_width] / 2;
+                                    m_data[k] = m_data[k] + m_data[k - data_width] / 2;
                                 }
                                 for(std::uint32_t k = data_begin + bpp; k < data_begin + data_width; k++)
-                                    data_[k] = data_[k] + (std::uint8_t) (((int) data_[k - bpp] + (int) data_[k - data_width]) / 2);
+                                    m_data[k] = m_data[k] + (std::uint8_t) (((int) m_data[k - bpp] + (int) m_data[k - data_width]) / 2);
                                 break;
                             }
                             case 0x04: {
                                 if(i == 0) goto failed;
                                 for(std::uint32_t k = data_begin; k < data_begin + bpp; k++) {
-                                    data_[k] = data_[k] + data_[k - data_width];
+                                    m_data[k] = m_data[k] + m_data[k - data_width];
                                 }
                                 for(std::uint32_t k = data_begin + bpp; k < data_begin + data_width; k++) {
-                                    data_[k] = data_[k] + paethPredictor(data_[k - bpp], data_[k - data_width], data_[k - data_width - bpp]);
+                                    m_data[k] = m_data[k] + paethPredictor(m_data[k - bpp], m_data[k - data_width], m_data[k - data_width - bpp]);
                                 }
                                 break;
                             }
@@ -148,28 +139,28 @@ bool PNGImage::readPNG(const std::string& png_file_name) {
             file.close();
             return true;
         }else if(block_type == IHDR) {
-            file.read((char*) &header_, length);
+            file.read((char*) &m_header, length);
             file.read((char*) &crc, 4);
 
-            if(reverseEndian(crc) != calCRC32(IHDR, (std::uint8_t*) &header_, length))
+            if(reverseEndian(crc) != calCRC32(IHDR, (std::uint8_t*) &m_header, length))
                 goto failed;
 
-            if(header_.color_type != TRUE_COLOR && header_.color_type != TRUE_COLOR_ALPHA)
+            if(m_header.color_type != TRUE_COLOR && m_header.color_type != TRUE_COLOR_ALPHA)
                 goto failed;
 
-            header_.width = reverseEndian(header_.width);
-            header_.height = reverseEndian(header_.height);
-            compressed_data.reset(new std::uint8_t[(header_.width * 4 + 1) * header_.height]);
+            m_header.width = reverseEndian(m_header.width);
+            m_header.height = reverseEndian(m_header.height);
+            compressed_data.resize((m_header.width * 4 + 1) * m_header.height);
         }else if(block_type == IDAT){
-            if(!compressed_data) goto failed;
-            std::unique_ptr<std::uint8_t[]> buf(new std::uint8_t[length]);
-            file.read((char*) buf.get(), length);
+            if(compressed_data.empty()) goto failed;
+            std::vector<std::uint8_t> buf(length);
+            file.read((char*) buf.data(), length);
             file.read((char*) &crc, 4);
 
-            if(reverseEndian(crc) != calCRC32(IDAT, (std::uint8_t*) buf.get(), length))
+            if(reverseEndian(crc) != calCRC32(IDAT, (std::uint8_t*) buf.data(), length))
                 goto failed;
 
-            memcpy(compressed_data.get() + data_index, buf.get(), length);
+            memcpy(compressed_data.data() + data_index, buf.data(), length);
             data_index += length;
 
             
@@ -183,21 +174,21 @@ failed:
     return false;
 }
 
-inline void writeBlock(std::ofstream& file, PNGDataBlockType type, const uint8_t* data, std::uint32_t length) {
-    std::uint32_t dlen = reverseEndian(length);
-    std::uint32_t ascii = reverseEndian((std::uint32_t) type);
-    std::uint32_t crc = reverseEndian(calCRC32(type, data, length));
-    
-    file.write((char*) &dlen, 4);
-    file.write((char*) &ascii, 4);
-    file.write((char*) data, length);
-    file.write((char*) &crc, 4);
-}
-
-bool PNGImage::generatePNG(const std::string& png_file_name) {
+bool PNGImage::save(const std::string& png_file_name) {
     static constexpr std::uint8_t iend[12] = {0x00, 0x00, 0x00, 0x00, 0x49, 0x45, 0x4E, 0x44, 0xAE, 0x42, 0x60, 0x82};
 
     std::ofstream file(png_file_name, std::ios::out | std::ios::binary | std::ios::trunc);
+
+    auto writeBlock = [&file](PNGDataBlockType type, const uint8_t* data, std::uint32_t length) {
+        std::uint32_t dlen = reverseEndian(length);
+        std::uint32_t ascii = reverseEndian((std::uint32_t) type);
+        std::uint32_t crc = reverseEndian(calCRC32(type, data, length));
+        
+        file.write((char*) &dlen, 4);
+        file.write((char*) &ascii, 4);
+        file.write((char*) data, length);
+        file.write((char*) &crc, 4);
+    };
 
     if(!file.is_open()) {
         file.close();
@@ -212,28 +203,28 @@ bool PNGImage::generatePNG(const std::string& png_file_name) {
     std::uint32_t crc;
 
     // IHDR
-    PNGImageHeader header = header_;
+    PNGImageHeader header = m_header;
     header.width = reverseEndian(header.width);
     header.height = reverseEndian(header.height);
 
-    writeBlock(file, IHDR, (std::uint8_t*) &header, 13);
+    writeBlock(IHDR, (std::uint8_t*) &header, 13);
 
     // IDAT
-    int bpp = (header_.color_type == TRUE_COLOR ? 3 : 4);
-    uLongf len = (header_.width * bpp + 1) * header_.height;
-    std::unique_ptr<std::uint8_t[]> buf(new std::uint8_t[len]);
-    for(std::uint32_t i = 0; i < header_.height; i++) {
-        std::uint32_t buf_begin = i * (header_.width * bpp + 1);
-        std::uint32_t data_begin = i * header_.width * bpp;
+    int bpp = (m_header.color_type == TRUE_COLOR ? 3 : 4);
+    uLongf len = (m_header.width * bpp + 1) * m_header.height;
+    std::vector<std::uint8_t> buf(len);
+    for(std::uint32_t i = 0; i < m_header.height; i++) {
+        std::uint32_t buf_begin = i * (m_header.width * bpp + 1);
+        std::uint32_t data_begin = i * m_header.width * bpp;
         buf[buf_begin] = 0x00;
-        memcpy(buf.get() + buf_begin + 1, data_.get() + data_begin, header_.width * bpp);
+        memcpy(buf.data() + buf_begin + 1, m_data.data() + data_begin, m_header.width * bpp);
     }
 
-    std::unique_ptr<std::uint8_t[]> compressed_data(new std::uint8_t[len]);
-    compress(compressed_data.get(), &len, buf.get(), len);
+    std::vector<std::uint8_t> compressed_data(len);
+    compress(compressed_data.data(), &len, buf.data(), len);
 
 
-    writeBlock(file, IDAT, compressed_data.get(), len);
+    writeBlock(IDAT, compressed_data.data(), len);
 
     // IEND
     file.write((char*) iend, 12);
