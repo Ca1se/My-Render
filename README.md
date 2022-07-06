@@ -5,20 +5,27 @@ This is a simple software rasterization written by C++17, It simulates the entir
 ![picture1](https://github.com/Ca1se/My-Render/blob/master/picture/picture1.png)  
 ![picture2](https://github.com/Ca1se/My-Render/blob/master/picture/picture2.png)
 # Build
-This project runs on linux, make sure that you have cmake and these libraries to build this project: z-lib, xcb, xcb-image.
+## Arch Linux
 ```
-git clone https://github.com/Ca1se/My-Render
-cd My-Render
+# install dependency
+sudo pacman -S libxcb xcb-util-image zlib
+
+# build
+git clone https://github.com/caseshot/Renderer
+cd Renderer
 mkdir build
 cd build
 cmake -DCMAKE_BUILD_TYPE=Release ..
 make -j4
 ```
 # Usage
-To use this render, you need prepare obj format model and corresponding png format texture.  
-I have prepared some model in directory named example.
 ```
-./render --model ../example/cottage/cottage.obj --texture ../example/cottage/cottage_diffuse.png
+./renderer [--window-size <width>x<height>] --model <model-path>... --texture (<texture-path> | null)...
+```
+Model and texture should correspond to each other, set the texture path to 'null' means no texture assigned to the model, only support png format texture file
+```
+# example
+./renderer --model ../example/cottage/cottage.obj --texture ../example/cottage/cottage_diffuse.png
 ```
 
 # Reference
