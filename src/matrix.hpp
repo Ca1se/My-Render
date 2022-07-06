@@ -1,6 +1,3 @@
-// Author: Wu Zihao                 
-// Github: https://github.com/Ca1se 
-//
 // This is a matrix library containing both matrix and vector parts.
 // This library is used for calculations for my computer graphics practice project.
 // This library require C++17
