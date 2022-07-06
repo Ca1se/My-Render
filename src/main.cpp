@@ -14,22 +14,29 @@
 #include "macro.hpp"
 #include "window.hpp"
 
-static const char* const kHelpMessage = "--help                                 display this help message\n"
-                                        "--model MODEL1 [MODEL2] ...            load models, model names should be separated by commas, only            \n"
-                                        "                                       support obj format model file                                           \n"
-                                        "--texture TEXTURE1 [TEXTURE2] ...      load textures, model and texture should correspond to each other,       \n"
-                                        "                                       when you don't want to specify a texture for the model, texture         \n"
-                                        "                                       name should be \"null\", only support obj format model and png format   \n"
-                                        "--window-size WIDTHxHEIGHT             set the window width and height, default window size is 800x600         \n";
-
 int main(int argc, char** argv) {
+    static const char* const kHelpMessage = 
+        "A simple software rasterizer.\n"
+        "\n"
+        "Usage:\n"
+        "\trenderer --help\n"
+        "\trenderer [--window-size <width>x<height>] --model <model-path>... --texture (<texture-path> | null)...             \n"
+        "\n"
+        "Options:\n"
+        "\t--help                                     Show this help message                                                  \n"
+        "\t--model <model-path>...                    Set model paths, only support obj format model file                     \n"
+        "\t--texture (<texture-path> | null)...       Set texture paths, model and texture should correspond to each other,   \n"
+        "\t                                           set the texture path to 'null' means no texture assigned to the model,  \n"
+        "\t                                           only support png format texture file                                    \n"
+        "\t--window-size <width>x<height>             Set the window width and height [default: 800x600]                      \n";
+
     if(argc < 2) {
         printf(kHelpMessage);
         return 0;
     }
 
-    int window_width = 1080;
-    int window_height = 540;
+    int window_width = 800;
+    int window_height = 600;
     bool model = false;
     bool texture = false;
     ObjLoader loader;
@@ -78,7 +85,7 @@ int main(int argc, char** argv) {
             auto m = loader.loadModel(argv[i]);
             models.push_back(m);
         }else if(texture) {
-            if(!strcmp(argv[i], "none")) {
+            if(!strcmp(argv[i], "null")) {
                 textures.push_back(std::shared_ptr<Texture>{});
             }else {
                 auto t = loader.loadTexture(argv[i]);
