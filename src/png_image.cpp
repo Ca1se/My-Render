@@ -68,7 +68,9 @@ bool PNGImage::load(const std::string& png_file_name) {
     std::uint32_t crc;
 
     while(true) {
-        file.read((char*) &length, 4);
+        if(!file.read((char*) &length, 4))
+            goto failed;
+
         file.read((char*) &block_type, 4);
         length = reverseEndian(length);
         block_type = reverseEndian(block_type);
