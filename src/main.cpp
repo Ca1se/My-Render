@@ -20,15 +20,15 @@ int main(int argc, char** argv) {
         "\n"
         "Usage:\n"
         "\trenderer --help\n"
-        "\trenderer [--window-size <width>x<height>] --model <model-path>... --texture (<texture-path> | null)...             \n"
+        "\trenderer [--window-size <width>x<height>] --model <model-path>... --texture (<texture-path> | null)...\n"
         "\n"
         "Options:\n"
-        "\t--help                                     Show this help message                                                  \n"
-        "\t--model <model-path>...                    Set model paths, only support obj format model file                     \n"
-        "\t--texture (<texture-path> | null)...       Set texture paths, model and texture should correspond to each other,   \n"
-        "\t                                           set the texture path to 'null' means no texture assigned to the model,  \n"
-        "\t                                           only support png format texture file                                    \n"
-        "\t--window-size <width>x<height>             Set the window width and height [default: 800x600]                      \n";
+        "\t--help                                     Show this help message\n"
+        "\t--model <model-path>...                    Set model paths, only support obj format model file\n"
+        "\t--texture (<texture-path> | null)...       Set texture paths, model and texture should correspond to\n"
+        "\t                                           each other, set the texture path to 'null' means no texture\n"
+        "\t                                           assigned to the model, only support png format texture file\n"
+        "\t--window-size <width>x<height>             Set the window width and height [default: 800x600]\n";
 
     if(argc < 2) {
         printf(kHelpMessage);
