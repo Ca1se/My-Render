@@ -1,11 +1,9 @@
 #include <array>
-#include <clocale>
 #include <cmath>
 #include <iostream>
 #include <thread>
 #include <tuple>
 #include <vector>
-#include <omp.h>
 #include "pipeline.hpp"
 #include "macro.hpp"
 #include "model.hpp"
@@ -60,15 +58,27 @@ inline float get_intersect_ratio(Vector4f prev, Vector4f curv, Plane clip_plane)
 static int clipWithPlane(Plane clip_plane, int vertex_num, Payload& payload) {
     bool is_odd = (bool) (clip_plane % 2);
 
-    auto& in_coords         = (is_odd ? payload.clipped_coords_b : payload.clipped_coords_a);
-    auto& in_world_coords   = (is_odd ? payload.clipped_world_coords_b : payload.clipped_world_coords_a);
-    auto& in_normals        = (is_odd ? payload.clipped_normals_b : payload.clipped_normals_a);
-    auto& in_uvs            = (is_odd ? payload.clipped_uvs_b : payload.clipped_uvs_a);
+    auto* in_coords         = payload.clipped_coords_b;
+    auto* in_world_coords   = payload.clipped_world_coords_b;
+    auto* in_normals        = payload.clipped_normals_b;
+    auto* in_uvs            = payload.clipped_uvs_b;
 
-    auto& out_coords        = (is_odd ? payload.clipped_coords_a : payload.clipped_coords_b);
-    auto& out_world_coords  = (is_odd ? payload.clipped_world_coords_a : payload.clipped_world_coords_b);
-    auto& out_normals       = (is_odd ? payload.clipped_normals_a : payload.clipped_normals_b);
-    auto& out_uvs           = (is_odd ? payload.clipped_uvs_a : payload.clipped_uvs_b);
+    auto* out_coords        = payload.clipped_coords_a;
+    auto* out_world_coords  = payload.clipped_world_coords_a;
+    auto* out_normals       = payload.clipped_normals_a;
+    auto* out_uvs           = payload.clipped_uvs_a;
+
+    if(!is_odd) {
+        in_coords         = payload.clipped_coords_a;
+        in_world_coords   = payload.clipped_world_coords_a;
+        in_normals        = payload.clipped_normals_a;
+        in_uvs            = payload.clipped_uvs_a;
+
+        out_coords        = payload.clipped_coords_b;
+        out_world_coords  = payload.clipped_world_coords_b;
+        out_normals       = payload.clipped_normals_b;
+        out_uvs           = payload.clipped_uvs_b;
+    }
 
     int num = 0;
 
@@ -122,33 +132,14 @@ inline void prepareVertex(const std::array<int, 3>& tri_index, Payload& payload,
 Pipeline::Pipeline(int width, int height):
         width(width), height(height),
         zbuffer(width * height),
-        framebuffer(4 * width * height),
-        locks(width * height) {
+        framebuffer(4 * width * height) { }
 
-    for(omp_lock_t& lock: locks) {
-        omp_init_lock(&lock);
-    }
-}
-
-Pipeline::~Pipeline() {
-    for(omp_lock_t& lock: locks) {
-        omp_destroy_lock(&lock);
-    }
-}
+Pipeline::~Pipeline() { }
 
 void Pipeline::renderingModel(const Model& model, Shader shader) {
     int face_num = model.faces.size();
     
-#ifdef MULTI_THREAD
-
-#pragma omp parallel for num_threads(THREAD_NUM)
-    for(int i = 0; i < THREAD_NUM; i++) {
-        renderingTriangles(i, face_num, THREAD_NUM, model, shader);
-    }
-
-#else
     renderingTriangles(0, face_num, 1, model, shader);
-#endif
 }
 
 void Pipeline::renderingTriangles(int begin, int end, int interval, const Model& model, Shader shader) {
@@ -213,25 +204,9 @@ void Pipeline::rasterize(const Payload& payload, const Shader& shader) {
             auto [alpha, beta, gamma] = computeBarycentricCoords2D((float) (x + 0.5), (float) (y + 0.5), screen_pos);
             if(inside_triangle(alpha, beta, gamma)) {
                 int index = y * width + x;
-                omp_lock_t* now_lock = &locks[index];
                 float corrector = 1 / (alpha / payload.homo_coords[0].w() + beta / payload.homo_coords[1].w() + gamma / payload.homo_coords[2].w());
                 float z = -corrector;
 
-#ifdef MULTI_THREAD
-                omp_set_lock(now_lock);
-                if(zbuffer[index] > z) {
-                    zbuffer[index] = z;
-                    omp_unset_lock(now_lock);
-                    Vector3f color = shader.fragmentShader(alpha, beta, gamma, corrector);
-                    for(int i = 0; i < 3; i++) {
-                        color[i] = std::max(0.f, std::min(255.f, color[i]));
-                    }
-                    omp_set_lock(now_lock);
-                    if(zbuffer[index] == z)
-                        setColor(x, y, color);
-                }
-                omp_unset_lock(now_lock);
-#else
                 if(zbuffer[index] > z) {
                     zbuffer[index] = z;
                     Vector3f color = shader.fragmentShader(alpha, beta, gamma, corrector);
@@ -240,7 +215,6 @@ void Pipeline::rasterize(const Payload& payload, const Shader& shader) {
                     }
                     setColor(x, y, color);
                 }
-#endif
             }
         }
     }
