@@ -1,5 +1,5 @@
 # Renderer
-This is a simple software rasterization written by C++17, It simulates the entire process when gpu renders a model.
+This is a simple software rasterization written by C++17.
 
 ### Blinn-Phong
 ![picture1](https://github.com/Ca1se/My-Render/blob/master/picture/picture1.png)  
