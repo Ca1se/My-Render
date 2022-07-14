@@ -16,14 +16,13 @@
 #include <utility>
 
 
-inline constexpr bool equalValue(size_t t1, size_t t2) {
-    return (t1 == t2);
-}
+template <int X, int Y>
+inline constexpr static bool equali32_v = (X == Y);
 
 // Class Matrix (and Vector) only accept types
 // that can be used for arithmetic.
 template <typename T, size_t Rows, size_t Cols,
-        bool = equalValue(Rows, Cols),
+        bool = equali32_v<Rows, Cols>,
         bool = std::is_arithmetic<T>::value>
 class Matrix;
 
