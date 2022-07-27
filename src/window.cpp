@@ -2,6 +2,7 @@
 #include <cstdint>
 #include <iostream>
 #include <cstdlib>
+#include <mutex>
 #include <type_traits>
 #include <xcb/xcb.h>
 #include <xcb/xcb_image.h>
@@ -65,29 +66,15 @@ Window::~Window() {
 void Window::display() noexcept {
     xcb_map_window(connection_, window_);
     xcb_flush(connection_);
-    xcb_generic_event_t *ev;
-    while((ev = xcb_wait_for_event(connection_))) {
-        if((ev->response_type & ~0x80) == XCB_EXPOSE) {
-            free(ev);
-            break;
-        }
-    }
     closed_ = false;
     
     std::thread([this]() {
         xcb_generic_event_t* event;
-        int pre_event = -1;
-        if((event = xcb_wait_for_event(connection_)) != nullptr) free(event);
-        if((event = xcb_wait_for_event(connection_)) != nullptr) free(event);
         while((event = xcb_wait_for_event(connection_)) != nullptr) {
-            if(int e = (event->response_type & ~0x80); e != XCB_NO_EXPOSURE && e != XCB_KEY_RELEASE) {
-                if(e == pre_event) {
-                    free(event);
-                    pre_event = -1;
-                }else {
-                    pre_event = e;
+            int e = (event->response_type & ~0x80);
+            if(e >= XCB_KEY_PRESS && e <= XCB_MOTION_NOTIFY && e != XCB_KEY_RELEASE) {
+                    std::lock_guard<std::mutex> lock(queue_lock_);
                     waited_events_.push(event);
-                }
             }else {
                 free(event);
             }
@@ -103,8 +90,11 @@ void Window::handleEvent(Camera& camera) noexcept {
 
     float distance = Vector3f{camera.target - camera.view}.norm();
 
-    xcb_generic_event_t* event;
-    if((event = waitEventNonBlock()) != nullptr) {
+    std::queue<xcb_generic_event_t*> events = pullEvents();
+    xcb_generic_event_t* event = nullptr;
+    while(!events.empty()) {
+        event = events.front();
+        events.pop();
         switch (event->response_type & ~0x80) {
             // w: 25, s: 39, a: 38, d: 40, q: 24, e: 26, shift: 50
             case XCB_KEY_PRESS: {
@@ -230,6 +220,8 @@ void Window::handleEvent(Camera& camera) noexcept {
 
                 break;
             }
+            default:
+                break;
         }
         free(event);
     }

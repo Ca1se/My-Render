@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <mutex>
 #include <queue>
 #include <thread>
 #include <xcb/xcb.h>
@@ -30,6 +31,8 @@ private:
 
     std::queue<xcb_generic_event_t*> waited_events_;
 
+    std::mutex queue_lock_;
+
 public:
     Window(int width = 800, int height = 600);
     ~Window();
@@ -46,13 +49,11 @@ public:
     }
 
 private:
-    xcb_generic_event_t* waitEventNonBlock() noexcept {
-        xcb_generic_event_t* event = nullptr;
-        if(!waited_events_.empty()) {
-            event = waited_events_.front();
-            waited_events_.pop();
-        }
-        return event;
+    std::queue<xcb_generic_event_t*> pullEvents() noexcept {
+        std::queue<xcb_generic_event_t*> ret;
+        std::lock_guard<std::mutex> lock(queue_lock_);
+        waited_events_.swap(ret);
+        return ret;
     }
 };
 
