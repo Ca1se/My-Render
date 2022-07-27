@@ -58,25 +58,17 @@ public:
 
     size_t size() const noexcept { return (m_header.width * m_header.height); }
 
-    std::tuple<std::uint8_t, std::uint8_t, std::uint8_t, std::uint8_t>
-    getColor(int x, int y) const noexcept {
-        if(hasAlpha()) {
+    std::tuple<std::uint8_t, std::uint8_t, std::uint8_t, std::uint8_t> getColor(
+        int x, int y) const noexcept {
+        if (hasAlpha()) {
             int index = (y * width() + x) * 4;
-            return std::make_tuple(
-                m_data[index],
-                m_data[index + 1],
-                m_data[index + 2],
-                m_data[index + 3]
-            );
+            return std::make_tuple(m_data[index], m_data[index + 1],
+                                   m_data[index + 2], m_data[index + 3]);
         }
 
         int index = (y * width() + x) * 3;
-        return std::make_tuple(
-            m_data[index],
-            m_data[index + 1],
-            m_data[index + 2],
-            (std::uint8_t) 0xff
-        );
+        return std::make_tuple(m_data[index], m_data[index + 1],
+                               m_data[index + 2], (std::uint8_t)0xff);
     }
 
     bool hasAlpha() const noexcept { return (m_header.color_type == 6); }
@@ -86,4 +78,4 @@ public:
     const PNGImageHeader& header() const noexcept { return m_header; }
 };
 
-#endif // _PNG_IMAGE_HPP_
+#endif  // _PNG_IMAGE_HPP_
